@@ -1,108 +1,2565 @@
 <!DOCTYPE html>
-<html lang="en" class="scroll-smooth">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>CoWorkConnect | Cooperative Gig Services Platform for Household & Community Services</title>
-  <meta name="description" content="CoWorkConnect connects customers with verified local workers for household and community services under a transparent, fair-wage cooperative model. Smart India Hackathon SIH26089." />
+  <title>SmartCool Industrial IoT Dashboard</title>
+  <meta name="description" content="SmartCool Industrial IoT Dashboard with Real-Time Thermal Telemetry, Hysteresis Fan Control, and Web Serial API." />
   
-  <!-- Favicon SVG -->
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23059669' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2'/><circle cx='9' cy='7' r='4'/><path d='M22 21v-2a4 4 0 0 0-3-3.87'/><path d='M16 3.13a4 4 0 0 1 0 7.75'/><path d='m9 12 2 2 4-4'/></svg>" />
+  <!-- Favicon: Cyan Snowflake -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2300E5FF' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'><line x1='12' y1='2' x2='12' y2='22'/><line x1='2' y1='12' x2='22' y2='12'/><line x1='4.93' y1='4.93' x2='19.07' y2='19.07'/><line x1='19.07' y1='4.93' x2='4.93' y2='19.07'/><circle cx='12' cy='12' r='2.5' fill='%237847FF'/></svg>" />
 
-  <!-- Google Fonts: Plus Jakarta Sans & Outfit -->
+  <!-- Fonts: Plus Jakarta Sans & Outfit & JetBrains Mono -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
-  <!-- Tailwind CSS CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* ==========================================================================
+       EXACT REFERENCE SCREENSHOT THEME & DESIGN TOKENS
+       ========================================================================== */
+    :root {
+      /* Background Hierarchy */
+      --bg-body: #050B1B;
+      --bg-sidebar: #09132B;
+      --bg-card: #0B1833;
+      --bg-card-subtle: #0E2040;
+      --bg-card-inner: #071228;
+      
+      /* Borders */
+      --border-card: #173D68;
+      --border-subtle: rgba(23, 61, 104, 0.45);
+      --border-active: #00E5FF;
+
+      /* Accent Colors */
+      --cyan: #00E5FF;
+      --cyan-glow: rgba(0, 229, 255, 0.35);
+      --blue: #168BFF;
+      --blue-glow: rgba(22, 139, 255, 0.35);
+      --violet: #7847FF;
+      --violet-glow: rgba(120, 71, 255, 0.4);
+      --purple: #A855F7;
+      
+      /* Status Tints */
+      --green: #00E6A0;
+      --green-glow: rgba(0, 230, 160, 0.3);
+      --amber: #FFB020;
+      --red: #FF4D6D;
+      --red-glow: rgba(255, 77, 109, 0.35);
+
+      /* Typography */
+      --text-main: #FFFFFF;
+      --text-muted: #91A7C7;
+      --text-dim: #5C769D;
+
+      /* Gradient Presets */
+      --grad-primary-btn: linear-gradient(135deg, #00D2FF 0%, #168BFF 50%, #7B42F6 100%);
+      --grad-nav-active: linear-gradient(90deg, #00D2FF 0%, #7B42F6 100%);
+      --grad-arc-gauge: linear-gradient(135deg, #7847FF 0%, #168BFF 40%, #00E5FF 75%, #FF4D6D 100%);
+
+      /* Sizing */
+      --sidebar-width: 240px;
+      --header-height: 64px;
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --radius-full: 9999px;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      color-scheme: dark;
+      scroll-behavior: smooth;
+    }
+
+    body {
+      background-color: var(--bg-body);
+      color: var(--text-main);
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+      line-height: 1.4;
+      background-image: 
+        radial-gradient(circle at 10% 20%, rgba(22, 139, 255, 0.08) 0%, transparent 45%),
+        radial-gradient(circle at 90% 80%, rgba(120, 71, 255, 0.08) 0%, transparent 45%),
+        linear-gradient(to bottom, #050B1B, #030814);
+      background-attachment: fixed;
+    }
+
+    /* Ambient Wave at bottom left like reference */
+    body::after {
+      content: "";
+      position: fixed;
+      bottom: -150px;
+      left: -150px;
+      width: 500px;
+      height: 500px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(120, 71, 255, 0.12) 0%, rgba(0, 229, 255, 0.05) 50%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Scrollbars */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: var(--bg-body);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: var(--border-card);
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--cyan);
+    }
+
+    /* ==========================================================================
+       APP SHELL: SIDEBAR + MAIN CONTENT
+       ========================================================================== */
+    .app-layout {
+      display: flex;
+      min-height: 100vh;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Left Sidebar */
+    aside.sidebar {
+      width: var(--sidebar-width);
+      background: var(--bg-sidebar);
+      border-right: 1px solid var(--border-card);
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      z-index: 50;
+      transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    /* Brand Header with Snowflake */
+    .sidebar-brand {
+      height: var(--header-height);
+      padding: 0 18px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .brand-snowflake-icon {
+      width: 38px;
+      height: 38px;
+      color: var(--cyan);
+      filter: drop-shadow(0 0 10px var(--cyan-glow));
+      flex-shrink: 0;
+    }
+
+    .brand-text h1 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.25rem;
+      font-weight: 800;
+      letter-spacing: -0.2px;
+      line-height: 1.1;
+      color: #FFFFFF;
+    }
+
+    .brand-text h1 span {
+      color: #A855F7;
+    }
+
+    .brand-text p {
+      font-size: 0.62rem;
+      font-weight: 700;
+      letter-spacing: 0.8px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      margin-top: 1px;
+    }
+
+    /* Sidebar Navigation Links */
+    .sidebar-nav {
+      flex: 1;
+      padding: 16px 12px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 14px;
+      border-radius: var(--radius-md);
+      color: var(--text-muted);
+      font-size: 0.86rem;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.2s ease;
+      position: relative;
+    }
+
+    .nav-item svg {
+      width: 18px;
+      height: 18px;
+      stroke-width: 2.1;
+      color: var(--text-muted);
+      transition: color 0.2s;
+      flex-shrink: 0;
+    }
+
+    .nav-item:hover {
+      color: var(--text-main);
+      background: rgba(22, 139, 255, 0.08);
+    }
+
+    .nav-item:hover svg {
+      color: var(--cyan);
+    }
+
+    /* Active Item: Gradient Fill Pill like Reference */
+    .nav-item.active {
+      background: var(--grad-nav-active);
+      color: #FFFFFF;
+      box-shadow: 0 4px 18px rgba(0, 210, 255, 0.35);
+    }
+
+    .nav-item.active svg {
+      color: #FFFFFF;
+      filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.6));
+    }
+
+    .nav-badge-pill {
+      margin-left: auto;
+      background: #FF4D6D;
+      color: #FFFFFF;
+      font-size: 0.68rem;
+      font-weight: 700;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 8px var(--red-glow);
+    }
+
+    /* Sidebar Footer Branding Tagline */
+    .sidebar-footer {
+      padding: 14px 16px;
+      border-top: 1px solid var(--border-subtle);
+      background: rgba(5, 11, 27, 0.4);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .footer-logo-icon {
+      width: 28px;
+      height: 28px;
+      color: #7847FF;
+      flex-shrink: 0;
+    }
+
+    .footer-text {
+      font-size: 0.7rem;
+      line-height: 1.3;
+    }
+
+    .footer-text strong {
+      color: #FFFFFF;
+      display: block;
+      font-weight: 600;
+    }
+
+    .footer-text span {
+      color: var(--text-dim);
+    }
+
+    /* Main Content Wrapper */
+    .main-wrapper {
+      margin-left: var(--sidebar-width);
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      transition: margin-left 0.28s ease;
+    }
+
+    /* ==========================================================================
+       TOPBAR / COMPACT HORIZONTAL HEADER
+       ========================================================================== */
+    header.topbar {
+      height: var(--header-height);
+      background: rgba(9, 19, 43, 0.92);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border-card);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      position: sticky;
+      top: 0;
+      z-index: 40;
+    }
+
+    .topbar-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .mobile-menu-btn {
+      display: none;
+      background: transparent;
+      border: 1px solid var(--border-card);
+      color: var(--text-main);
+      padding: 6px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+    }
+
+    .topbar-title h2 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.12rem;
+      font-weight: 700;
+      color: #FFFFFF;
+      line-height: 1.2;
+    }
+
+    .topbar-title p {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+    }
+
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    /* Status Pills */
+    .pill {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 5px 12px;
+      border-radius: var(--radius-full);
+      font-size: 0.74rem;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .pill-green {
+      background: rgba(0, 230, 160, 0.1);
+      border: 1px solid rgba(0, 230, 160, 0.4);
+      color: var(--green);
+    }
+
+    .pill-green-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 8px var(--green-glow);
+    }
+
+    .pill-red {
+      background: rgba(255, 77, 109, 0.1);
+      border: 1px solid rgba(255, 77, 109, 0.4);
+      color: var(--red);
+    }
+
+    .pill-red-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--red);
+      box-shadow: 0 0 8px var(--red-glow);
+    }
+
+    /* Clock Pill */
+    .clock-pill {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      color: var(--text-main);
+      font-size: 0.78rem;
+    }
+
+    .clock-pill svg {
+      width: 16px;
+      height: 16px;
+      color: var(--text-muted);
+    }
+
+    .clock-text {
+      line-height: 1.2;
+    }
+
+    .clock-text strong {
+      display: block;
+      font-weight: 700;
+      font-size: 0.8rem;
+      color: #FFFFFF;
+    }
+
+    .clock-text span {
+      font-size: 0.66rem;
+      color: var(--text-muted);
+    }
+
+    /* Icon Buttons */
+    .btn-icon {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 6px;
+      border-radius: 50%;
+      transition: all 0.2s;
+    }
+
+    .btn-icon:hover {
+      color: var(--cyan);
+      background: rgba(22, 139, 255, 0.1);
+    }
+
+    /* Blue-Purple Gradient Primary Button */
+    .btn-gradient {
+      background: var(--grad-primary-btn);
+      color: #FFFFFF;
+      font-size: 0.82rem;
+      font-weight: 700;
+      padding: 8px 16px;
+      border-radius: var(--radius-full);
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 18px rgba(0, 210, 255, 0.35);
+      transition: all 0.2s ease;
+      text-decoration: none;
+    }
+
+    .btn-gradient:hover {
+      box-shadow: 0 6px 24px rgba(0, 210, 255, 0.55);
+      transform: translateY(-1px);
+    }
+
+    /* ==========================================================================
+       DASHBOARD BODY CONTAINER & GRID
+       ========================================================================== */
+    .dashboard-container {
+      padding: 20px 24px 30px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    /* Demo Active Banner */
+    .demo-banner {
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 16px;
+      background: linear-gradient(90deg, rgba(120, 71, 255, 0.2), rgba(0, 229, 255, 0.15));
+      border: 1px solid rgba(0, 229, 255, 0.4);
+      border-radius: var(--radius-md);
+      font-size: 0.82rem;
+    }
+
+    .demo-banner.active {
+      display: flex;
+    }
+
+    /* Cards */
+    .card {
+      background: linear-gradient(180deg, #0E2040 0%, #0B1833 100%);
+      border: 1px solid var(--border-card);
+      border-radius: var(--radius-lg);
+      padding: 18px 20px;
+      box-shadow: 0 8px 24px rgba(2, 6, 18, 0.6);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .card-header-flex {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .card-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.02rem;
+      font-weight: 700;
+      color: #FFFFFF;
+      display: flex;
+      align-items: center;
+      gap: 9px;
+    }
+
+    .title-icon {
+      width: 20px;
+      height: 20px;
+      color: var(--cyan);
+    }
+
+    /* 3-Column Grid for Row 1 & Row 2 */
+    .row-3col {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 18px;
+    }
+
+    /* ==========================================================================
+       ROW 1 - CARD 1: CURRENT TEMPERATURE (Radial Gradient Arc Gauge)
+       ========================================================================== */
+    .temp-card-body {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex: 1;
+    }
+
+    .gauge-wrapper {
+      position: relative;
+      width: 146px;
+      height: 146px;
+      flex-shrink: 0;
+    }
+
+    .gauge-svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    .gauge-center-content {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+    }
+
+    .gauge-temp-number {
+      font-family: 'Outfit', sans-serif;
+      font-size: 2.1rem;
+      font-weight: 800;
+      color: #FFFFFF;
+      letter-spacing: -0.5px;
+      line-height: 1;
+    }
+
+    .gauge-status-badge {
+      font-size: 0.68rem;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: var(--radius-full);
+      background: rgba(0, 230, 160, 0.12);
+      border: 1px solid rgba(0, 230, 160, 0.4);
+      color: var(--green);
+      margin-top: 6px;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .gauge-status-badge::before {
+      content: "";
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    .temp-details-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      flex: 1;
+      font-size: 0.78rem;
+    }
+
+    .temp-detail-row {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+    }
+
+    .temp-detail-label {
+      color: var(--text-muted);
+      font-size: 0.72rem;
+    }
+
+    .temp-detail-val {
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 700;
+      font-size: 0.95rem;
+      color: #FFFFFF;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .delta-indicator {
+      font-size: 0.76rem;
+      font-weight: 700;
+      color: var(--red);
+    }
+
+    .edit-threshold-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      margin-left: 6px;
+    }
+
+    .edit-threshold-btn:hover {
+      color: var(--cyan);
+    }
+
+    .data-source-text {
+      color: var(--text-main);
+      font-size: 0.78rem;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .data-source-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--cyan);
+      box-shadow: 0 0 6px var(--cyan-glow);
+    }
+
+    /* ==========================================================================
+       ROW 1 - CARD 2: FAN STATUS
+       ========================================================================== */
+    .fan-card-body {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      flex: 1;
+      justify-content: space-between;
+    }
+
+    .fan-middle-row {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .fan-housing-circle {
+      width: 82px;
+      height: 82px;
+      border-radius: 50%;
+      background: radial-gradient(circle, #0B1833 0%, #060E22 100%);
+      border: 2px solid var(--border-card);
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      position: relative;
+    }
+
+    .fan-housing-circle.active {
+      border-color: var(--cyan);
+      box-shadow: 0 0 22px var(--cyan-glow);
+    }
+
+    .fan-propeller-svg {
+      width: 48px;
+      height: 48px;
+      color: var(--text-dim);
+      transition: color 0.3s;
+    }
+
+    .fan-housing-circle.active .fan-propeller-svg {
+      color: var(--cyan);
+      animation: spinFan 0.7s linear infinite;
+    }
+
+    @keyframes spinFan {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    .fan-controls-right {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .mode-label {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+    }
+
+    .mode-switcher-pill {
+      display: inline-flex;
+      background: #071228;
+      border: 1px solid var(--border-card);
+      border-radius: var(--radius-full);
+      padding: 3px;
+      gap: 2px;
+      width: fit-content;
+    }
+
+    .mode-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 4px 12px;
+      border-radius: var(--radius-full);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .mode-btn.active {
+      background: var(--blue);
+      color: #FFFFFF;
+      box-shadow: 0 2px 8px rgba(22, 139, 255, 0.4);
+    }
+
+    .speed-slider-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.74rem;
+    }
+
+    .fan-speed-track {
+      flex: 1;
+      height: 6px;
+      background: #071228;
+      border-radius: 4px;
+      border: 1px solid var(--border-card);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .fan-speed-fill {
+      height: 100%;
+      width: 70%;
+      background: linear-gradient(90deg, var(--blue), var(--cyan));
+      border-radius: 4px;
+      transition: width 0.3s;
+    }
+
+    .fan-bottom-box {
+      background: rgba(7, 18, 40, 0.7);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      padding: 8px 12px;
+      gap: 8px;
+    }
+
+    .fan-bottom-stat span {
+      display: block;
+      font-size: 0.68rem;
+      color: var(--text-muted);
+    }
+
+    .fan-bottom-stat strong {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.92rem;
+      color: #FFFFFF;
+    }
+
+    /* ==========================================================================
+       ROW 1 - CARD 3: TEMPERATURE RANGE (CHART)
+       ========================================================================== */
+    .filter-btn-group {
+      display: flex;
+      gap: 4px;
+    }
+
+    .chart-btn {
+      background: #071228;
+      border: 1px solid var(--border-card);
+      color: var(--text-muted);
+      font-size: 0.68rem;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .chart-btn.active, .chart-btn:hover {
+      background: var(--blue);
+      color: #FFFFFF;
+      border-color: var(--blue);
+    }
+
+    .chart-container-box {
+      position: relative;
+      height: 150px;
+      width: 100%;
+      flex: 1;
+    }
+
+    /* ==========================================================================
+       ROW 2 - CARD 1: SYSTEM STATISTICS
+       ========================================================================== */
+    .stats-4grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .stat-box {
+      background: #071228;
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      padding: 8px 10px;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stat-box-title {
+      font-size: 0.68rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .stat-box-val {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1.08rem;
+      font-weight: 800;
+      margin-top: 3px;
+    }
+
+    .sparkline-svg {
+      width: 100%;
+      height: 18px;
+      margin-top: 4px;
+    }
+
+    .stats-bottom-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    .mini-stat-card {
+      background: #071228;
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      padding: 8px 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .mini-stat-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      background: rgba(22, 139, 255, 0.12);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--blue);
+      flex-shrink: 0;
+    }
+
+    .mini-stat-text span {
+      display: block;
+      font-size: 0.65rem;
+      color: var(--text-muted);
+    }
+
+    .mini-stat-text strong {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.82rem;
+      color: #FFFFFF;
+    }
+
+    /* ==========================================================================
+       ROW 2 - CARD 2: DEVICE STATUS
+       ========================================================================== */
+    .device-table {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      font-size: 0.78rem;
+      margin-bottom: 12px;
+    }
+
+    .device-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 3px 0;
+      border-bottom: 1px solid rgba(23, 61, 104, 0.3);
+    }
+
+    .device-row-label {
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .device-row-label svg {
+      width: 14px;
+      height: 14px;
+      color: var(--text-dim);
+    }
+
+    .device-row-val {
+      font-weight: 600;
+      color: #FFFFFF;
+    }
+
+    .btn-connect-full {
+      width: 100%;
+      background: var(--grad-primary-btn);
+      border: none;
+      color: #FFFFFF;
+      font-size: 0.82rem;
+      font-weight: 700;
+      padding: 9px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 4px 14px rgba(22, 139, 255, 0.35);
+      transition: all 0.2s;
+    }
+
+    .btn-connect-full:hover {
+      box-shadow: 0 6px 20px rgba(0, 229, 255, 0.5);
+    }
+
+    /* ==========================================================================
+       ROW 2 - CARD 3: DEMO SANDBOX
+       ========================================================================== */
+    .sandbox-subtitle {
+      font-size: 0.74rem;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+    }
+
+    .btn-start-demo {
+      width: 100%;
+      background: var(--grad-primary-btn);
+      border: none;
+      color: #FFFFFF;
+      font-size: 0.88rem;
+      font-weight: 700;
+      padding: 10px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 4px 16px rgba(0, 210, 255, 0.35);
+      margin-bottom: 8px;
+      transition: all 0.2s;
+    }
+
+    .btn-start-demo:hover {
+      box-shadow: 0 6px 22px rgba(0, 210, 255, 0.55);
+    }
+
+    .sandbox-2grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .btn-heatwave {
+      background: rgba(255, 77, 109, 0.14);
+      border: 1px solid rgba(255, 77, 109, 0.5);
+      color: #FFA2B2;
+      font-size: 0.74rem;
+      font-weight: 700;
+      padding: 8px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+
+    .btn-heatwave:hover {
+      background: rgba(255, 77, 109, 0.3);
+      color: #FFFFFF;
+    }
+
+    .btn-cooldown {
+      background: rgba(0, 229, 255, 0.12);
+      border: 1px solid rgba(0, 229, 255, 0.45);
+      color: #7BEAFF;
+      font-size: 0.74rem;
+      font-weight: 700;
+      padding: 8px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+
+    .btn-cooldown:hover {
+      background: rgba(0, 229, 255, 0.25);
+      color: #FFFFFF;
+    }
+
+    .btn-sensor-error {
+      width: 100%;
+      background: rgba(255, 176, 32, 0.12);
+      border: 1px solid rgba(255, 176, 32, 0.45);
+      color: #FFD27D;
+      font-size: 0.74rem;
+      font-weight: 700;
+      padding: 8px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      margin-bottom: 8px;
+      transition: all 0.2s;
+    }
+
+    .btn-sensor-error:hover {
+      background: rgba(255, 176, 32, 0.25);
+      color: #FFFFFF;
+    }
+
+    .btn-reset-demo {
+      width: 100%;
+      background: transparent;
+      border: 1px solid var(--border-card);
+      color: var(--text-muted);
+      font-size: 0.74rem;
+      font-weight: 600;
+      padding: 7px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+
+    .btn-reset-demo:hover {
+      border-color: var(--cyan);
+      color: #FFFFFF;
+    }
+
+    /* ==========================================================================
+       BOTTOM SECTION: ALERTS & EVENTS (HORIZONTAL CARDS)
+       ========================================================================== */
+    .alerts-events-card {
+      padding: 16px 20px;
+    }
+
+    .alerts-grid-horizontal {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 12px;
+      margin-top: 4px;
+    }
+
+    .event-tile {
+      background: #071228;
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 10px 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: border-color 0.2s;
+    }
+
+    .event-tile:hover {
+      border-color: var(--border-card);
+    }
+
+    .event-icon-circle {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .icon-green-fan {
+      background: rgba(0, 230, 160, 0.15);
+      color: var(--green);
+    }
+
+    .icon-amber-temp {
+      background: rgba(255, 176, 32, 0.15);
+      color: var(--amber);
+    }
+
+    .icon-blue-demo {
+      background: rgba(22, 139, 255, 0.15);
+      color: var(--blue);
+    }
+
+    .icon-cyan-fan {
+      background: rgba(0, 229, 255, 0.15);
+      color: var(--cyan);
+    }
+
+    .icon-red-alert {
+      background: rgba(255, 77, 109, 0.15);
+      color: var(--red);
+    }
+
+    .event-info span {
+      display: block;
+      font-size: 0.74rem;
+      font-weight: 600;
+      color: #FFFFFF;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .event-info time {
+      font-size: 0.65rem;
+      color: var(--text-dim);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* Modal */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(5, 11, 27, 0.85);
+      backdrop-filter: blur(10px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      padding: 20px;
+    }
+
+    .modal-overlay.active {
+      display: flex;
+    }
+
+    .modal-box {
+      background: #0E2040;
+      border: 1px solid var(--border-card);
+      border-radius: var(--radius-lg);
+      width: 100%;
+      max-width: 480px;
+      padding: 22px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8), 0 0 30px rgba(22, 139, 255, 0.2);
+    }
+
+    /* Toasts */
+    #toast-container {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      z-index: 110;
+      pointer-events: none;
+    }
+
+    .toast-msg {
+      background: #0E2040;
+      border: 1px solid var(--cyan);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6), 0 0 12px var(--cyan-glow);
+      color: #FFFFFF;
+      padding: 9px 15px;
+      border-radius: var(--radius-sm);
+      font-size: 0.8rem;
+      font-weight: 500;
+      pointer-events: auto;
+      animation: slideInToast 0.25s ease;
+    }
+
+    @keyframes slideInToast {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+
+    /* Responsive */
+    @media (max-width: 1200px) {
+      .row-3col {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .alerts-grid-horizontal {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    @media (max-width: 900px) {
+      aside.sidebar {
+        transform: translateX(-100%);
+      }
+      aside.sidebar.mobile-open {
+        transform: translateX(0);
+      }
+      .main-wrapper {
+        margin-left: 0;
+      }
+      .mobile-menu-btn {
+        display: block;
+      }
+      .row-3col {
+        grid-template-columns: 1fr;
+      }
+      .alerts-grid-horizontal {
+        grid-template-columns: 1fr 1fr;
+      }
+      .clock-pill {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- SVG Gradient Definitions -->
+  <svg width="0" height="0" style="position:absolute;">
+    <defs>
+      <!-- Gauge Arc Gradient: Purple -> Blue -> Cyan -> Red -->
+      <linearGradient id="gaugeGradient" x1="0%" y1="100%" x2="100%" y2="0%">
+        <stop offset="0%" stop-color="#7847FF" />
+        <stop offset="35%" stop-color="#168BFF" />
+        <stop offset="70%" stop-color="#00E5FF" />
+        <stop offset="100%" stop-color="#FF4D6D" />
+      </linearGradient>
+    </defs>
+  </svg>
+
+  <div class="app-layout">
+    
+    <!-- ========================================================================
+         SIDEBAR NAVIGATION
+         ======================================================================== -->
+    <aside class="sidebar" id="sidebar">
+      
+      <!-- Top Brand: SmartCool + Snowflake -->
+      <div class="sidebar-brand">
+        <!-- Exact Snowflake Icon -->
+        <svg class="brand-snowflake-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="12" y1="2" x2="12" y2="22"/>
+          <line x1="2" y1="12" x2="22" y2="12"/>
+          <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/>
+          <line x1="19.07" y1="4.93" x2="4.93" y2="19.07"/>
+          <circle cx="12" cy="12" r="2.5" fill="#7847FF" stroke="#00E5FF"/>
+          <!-- Branching crystal ticks -->
+          <path d="m9 4 3 3 3-3"/>
+          <path d="m9 20 3-3 3 3"/>
+          <path d="m4 9 3 3-3 3"/>
+          <path d="m20 9-3 3 3 3"/>
+        </svg>
+        <div class="brand-text">
+          <h1>Smart<span>Cool</span></h1>
+          <p>Industrial IoT Telemetry</p>
+        </div>
+      </div>
+
+      <!-- Navigation Links -->
+      <nav class="sidebar-nav">
+        <!-- Overview (Active by default with gradient fill) -->
+        <a href="#overview" class="nav-item active" onclick="setActiveNav(this)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          Overview
+        </a>
+
+        <a href="#monitoring" class="nav-item" onclick="setActiveNav(this)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          Live Monitoring
+        </a>
+
+        <a href="#history" class="nav-item" onclick="setActiveNav(this)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          Temperature History
+        </a>
+
+        <a href="#fan-control" class="nav-item" onclick="setActiveNav(this)">
+          <!-- Fan Propeller Icon -->
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="3"/><path d="M12 9a3 3 0 0 0-3-3H6a3 3 0 0 0 0 6h3"/><path d="M15 12a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v3"/><path d="M12 15a3 3 0 0 0 3 3h3a3 3 0 0 0 0-6h-3"/><path d="M9 12a3 3 0 0 0-3 3v3a3 3 0 0 0 6 0v-3"/></svg>
+          Fan Control
+        </a>
+
+        <a href="#device-status" class="nav-item" onclick="setActiveNav(this)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+          Device Status
+        </a>
+
+        <a href="#alerts" class="nav-item" onclick="setActiveNav(this)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          Alerts & Events
+          <span class="nav-badge-pill" id="navAlertBadge">3</span>
+        </a>
+
+        <a href="#demo-sandbox" class="nav-item" onclick="setActiveNav(this)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          Demo Sandbox
+        </a>
+
+        <a href="#settings" class="nav-item" onclick="openSettingsModal()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          Settings
+        </a>
+      </nav>
+
+      <!-- Sidebar Tagline Footer -->
+      <div class="sidebar-footer">
+        <svg class="footer-logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
+        <div class="footer-text">
+          <strong>Smarter Cooling</strong>
+          <span>for a Greener Tomorrow</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ========================================================================
+         MAIN WRAPPER & TOPBAR
+         ======================================================================== -->
+    <div class="main-wrapper">
+      
+      <!-- Topbar Header -->
+      <header class="topbar">
+        <div class="topbar-left">
+          <button class="mobile-menu-btn" onclick="toggleMobileSidebar()" aria-label="Toggle Menu">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+          </button>
+          <div class="topbar-title">
+            <h2>SmartCool Industrial IoT Dashboard</h2>
+            <p>Real-Time Thermal Telemetry &bull; Hysteresis Fan Control &bull; Web Serial API</p>
+          </div>
+        </div>
+
+        <div class="topbar-right">
+          <!-- System Ready Indicator -->
+          <div class="pill pill-green">
+            <span class="pill-green-dot"></span>
+            <span id="systemStateText">System Ready</span>
+          </div>
+
+          <!-- Arduino Disconnected Indicator -->
+          <div class="pill pill-red" id="arduinoPill">
+            <span class="pill-red-dot" id="arduinoDot"></span>
+            <span id="arduinoPillText">Arduino Disconnected</span>
+          </div>
+
+          <!-- Clock and Date -->
+          <div class="clock-pill">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            <div class="clock-text">
+              <strong id="clockTime">10:42 AM</strong>
+              <span id="clockDate">Apr 26, 2025</span>
+            </div>
+          </div>
+
+          <!-- Settings Icon Button -->
+          <button class="btn-icon" title="Settings" onclick="openSettingsModal()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          </button>
+
+          <!-- Notifications Icon Button -->
+          <button class="btn-icon" title="Notifications" onclick="scrollToSection('alerts')">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          </button>
+
+          <!-- Gradient Connect Arduino Button -->
+          <button class="btn-gradient" id="btnConnectHeader" onclick="toggleSerialConnection()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+            <span id="btnConnectHeaderText">Connect Arduino</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- Dashboard Main Container -->
+      <main class="dashboard-container" id="overview">
+        
+        <!-- Live Demo Active Banner -->
+        <div class="demo-banner" id="demoBanner">
+          <div style="display:flex; align-items:center; gap:10px;">
+            <strong style="color:var(--cyan); font-family:'JetBrains Mono';">● DEMO SIMULATION RUNNING</strong>
+            <span style="color:var(--text-muted);">Generating deterministic sensor telemetry. Hardware disconnected.</span>
+          </div>
+          <button class="btn-reset-demo" style="width:auto; padding:4px 10px;" onclick="stopDemoMode()">Stop Demo</button>
+        </div>
+
+        <!-- ====================================================================
+             FIRST ROW: 3 ALIGNED CARDS
+             Card 1: Current Temperature | Card 2: Fan Status | Card 3: Temperature Range
+             ==================================================================== -->
+        <div class="row-3col" id="monitoring">
+          
+          <!-- Card 1: Current Temperature -->
+          <div class="card" id="cardTemp">
+            <div class="card-header-flex">
+              <span class="card-title">
+                <svg class="title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z"/></svg>
+                Current Temperature
+              </span>
+            </div>
+
+            <div class="temp-card-body">
+              <!-- Radial Gradient Arc Gauge -->
+              <div class="gauge-wrapper">
+                <svg class="gauge-svg" viewBox="0 0 140 140">
+                  <!-- Background Track Arc: 270 degrees from 135 deg to 405 deg -->
+                  <circle cx="70" cy="70" r="56" fill="none" stroke="rgba(23, 61, 104, 0.45)" stroke-width="10" stroke-dasharray="264 352" stroke-dashoffset="-44" stroke-linecap="round"/>
+                  <!-- Filled Gradient Arc -->
+                  <circle id="gaugeArcFill" cx="70" cy="70" r="56" fill="none" stroke="url(#gaugeGradient)" stroke-width="10" stroke-dasharray="264 352" stroke-dashoffset="100" stroke-linecap="round" style="transition: stroke-dashoffset 0.6s ease;"/>
+                </svg>
+                <div class="gauge-center-content">
+                  <div class="gauge-temp-number" id="valTemperature">30.2<span style="font-size:1.2rem; font-weight:600; color:var(--cyan);">°C</span></div>
+                  <div class="gauge-status-badge" id="tempCategoryBadge">Normal</div>
+                </div>
+              </div>
+
+              <!-- Metadata Details -->
+              <div class="temp-details-list">
+                <div class="temp-detail-row">
+                  <span class="temp-detail-label">Previous Reading</span>
+                  <div class="temp-detail-val">
+                    <span id="valPrevTemp">29.4°C</span>
+                    <span class="delta-indicator" id="tempDeltaIndicator">▲ +0.8°C</span>
+                  </div>
+                </div>
+
+                <div class="temp-detail-row">
+                  <span class="temp-detail-label">Threshold</span>
+                  <div class="temp-detail-val">
+                    <span id="valThresholdDisplay">32.0°C</span>
+                    <button class="edit-threshold-btn" title="Edit Threshold" onclick="openSettingsModal()">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                    </button>
+                  </div>
+                </div>
+
+                <div class="temp-detail-row">
+                  <span class="temp-detail-label">Data Source</span>
+                  <div class="data-source-text">
+                    <span class="data-source-dot" id="sourceDot"></span>
+                    <span id="valDataSource">Demo Simulation</span>
+                  </div>
+                </div>
+
+                <div class="temp-detail-row" style="margin-top:2px;">
+                  <span class="temp-detail-label">Last Updated &nbsp;<strong id="valLastUpdated" style="color:var(--text-main); font-family:'JetBrains Mono'; font-size:0.75rem;">10:42:15 AM</strong></span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Card 2: Fan Status -->
+          <div class="card" id="fan-control">
+            <div class="card-header-flex">
+              <span class="card-title">
+                <svg class="title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 9a3 3 0 0 0-3-3H6a3 3 0 0 0 0 6h3"/><path d="M15 12a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v3"/><path d="M12 15a3 3 0 0 0 3 3h3a3 3 0 0 0 0-6h-3"/><path d="M9 12a3 3 0 0 0-3 3v3a3 3 0 0 0 6 0v-3"/></svg>
+                Fan Status
+              </span>
+              <!-- Green ON / Red OFF Pill -->
+              <div class="pill pill-green" id="fanStatusPill">
+                <span class="pill-green-dot" id="fanStatusDot"></span>
+                <span id="fanStatusText">ON</span>
+              </div>
+            </div>
+
+            <div class="fan-card-body">
+              <div class="fan-middle-row">
+                <!-- Circular Fan Illustration Housing -->
+                <div class="fan-housing-circle active" id="fanHousing">
+                  <svg class="fan-propeller-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="3"/>
+                    <path d="M12 9a3 3 0 0 0-3-3H6a3 3 0 0 0 0 6h3"/>
+                    <path d="M15 12a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v3"/>
+                    <path d="M12 15a3 3 0 0 0 3 3h3a3 3 0 0 0 0-6h-3"/>
+                    <path d="M9 12a3 3 0 0 0-3 3v3a3 3 0 0 0 6 0v-3"/>
+                  </svg>
+                </div>
+
+                <div class="fan-controls-right">
+                  <div>
+                    <span class="mode-label">Mode</span>
+                    <div class="mode-switcher-pill">
+                      <button class="mode-btn active" id="btnModeAuto" onclick="setSystemMode('AUTO')">Auto</button>
+                      <button class="mode-btn" id="btnModeManual" onclick="setSystemMode('MANUAL')">Manual</button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <div style="display:flex; justify-content:space-between; font-size:0.72rem; color:var(--text-muted); margin-bottom:3px;">
+                      <span>Speed</span>
+                      <strong id="fanSpeedPct" style="color:#FFFFFF; font-family:'JetBrains Mono';">70%</strong>
+                    </div>
+                    <div class="speed-slider-row">
+                      <div class="fan-speed-track">
+                        <div class="fan-speed-fill" id="fanSpeedFill"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Bottom Stat Split Box -->
+              <div class="fan-bottom-box">
+                <div class="fan-bottom-stat">
+                  <span>Auto Threshold</span>
+                  <strong id="boxAutoTh">32.0°C</strong>
+                </div>
+                <div class="fan-bottom-stat">
+                  <span>Hysteresis</span>
+                  <strong id="boxHysteresis">2.0°C</strong>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Card 3: Temperature Range (Last 1 Hour) -->
+          <div class="card" id="history">
+            <div class="card-header-flex">
+              <span class="card-title">
+                <svg class="title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+                Temperature Range <span style="font-size:0.75rem; color:var(--text-muted); font-weight:400; font-family:'Plus Jakarta Sans';">(Last 1 Hour)</span>
+              </span>
+
+              <div class="filter-btn-group">
+                <button class="chart-btn active" onclick="setChartFilter('1h', this)">1H</button>
+                <button class="chart-btn" onclick="setChartFilter('15m', this)">15M</button>
+                <button class="chart-btn" onclick="setChartFilter('5m', this)">5M</button>
+                <button class="chart-btn" onclick="setChartFilter('1m', this)">1M</button>
+              </div>
+            </div>
+
+            <div class="chart-container-box">
+              <canvas id="tempChart"></canvas>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- ====================================================================
+             SECOND ROW: 3 BALANCED CARDS
+             Card 4: System Statistics | Card 5: Device Status | Card 6: Demo Sandbox
+             ==================================================================== -->
+        <div class="row-3col" id="device-status">
+          
+          <!-- Card 4: System Statistics -->
+          <div class="card">
+            <div class="card-header-flex">
+              <span class="card-title">
+                <svg class="title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+                System Statistics
+              </span>
+            </div>
+
+            <!-- Top 4 Tiles with Wavy Lines -->
+            <div class="stats-4grid">
+              <!-- Current -->
+              <div class="stat-box">
+                <span class="stat-box-title">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#00E5FF" stroke-width="2.2"><path d="M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z"/></svg>
+                  Current
+                </span>
+                <span class="stat-box-val" id="statCurTemp" style="color:#00E5FF;">30.2°C</span>
+                <!-- Cyan Wavy Line SVG -->
+                <svg class="sparkline-svg" viewBox="0 0 60 16" fill="none">
+                  <path d="M0 8 Q 15 15, 30 8 T 60 8" stroke="#00E5FF" stroke-width="2"/>
+                </svg>
+              </div>
+
+              <!-- Highest -->
+              <div class="stat-box">
+                <span class="stat-box-title">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#FF4D6D" stroke-width="2.2"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+                  Highest
+                </span>
+                <span class="stat-box-val" id="statPeakTemp" style="color:#FF4D6D;">35.6°C</span>
+                <!-- Red Wavy Line SVG -->
+                <svg class="sparkline-svg" viewBox="0 0 60 16" fill="none">
+                  <path d="M0 8 Q 15 2, 30 8 T 60 8" stroke="#FF4D6D" stroke-width="2"/>
+                </svg>
+              </div>
+
+              <!-- Lowest -->
+              <div class="stat-box">
+                <span class="stat-box-title">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#38BDF8" stroke-width="2.2"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+                  Lowest
+                </span>
+                <span class="stat-box-val" id="statMinTemp" style="color:#38BDF8;">24.8°C</span>
+                <!-- Blue Wavy Line SVG -->
+                <svg class="sparkline-svg" viewBox="0 0 60 16" fill="none">
+                  <path d="M0 8 Q 15 14, 30 8 T 60 8" stroke="#38BDF8" stroke-width="2"/>
+                </svg>
+              </div>
+
+              <!-- Average -->
+              <div class="stat-box">
+                <span class="stat-box-title">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#C084FC" stroke-width="2.2"><path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3Z"/></svg>
+                  Average
+                </span>
+                <span class="stat-box-val" id="statAvgTemp" style="color:#C084FC;">29.7°C</span>
+                <!-- Purple Wavy Line SVG -->
+                <svg class="sparkline-svg" viewBox="0 0 60 16" fill="none">
+                  <path d="M0 8 Q 15 3, 30 8 T 60 8" stroke="#C084FC" stroke-width="2"/>
+                </svg>
+              </div>
+            </div>
+
+            <!-- Bottom 3 Tiles -->
+            <div class="stats-bottom-row">
+              <div class="mini-stat-card">
+                <div class="mini-stat-icon">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+                </div>
+                <div class="mini-stat-text">
+                  <span>Fan Runtime</span>
+                  <strong id="valFanRuntime">2h 15m</strong>
+                </div>
+              </div>
+
+              <div class="mini-stat-card">
+                <div class="mini-stat-icon" style="color:var(--green); background:rgba(0, 230, 160, 0.12);">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/></svg>
+                </div>
+                <div class="mini-stat-text">
+                  <span>Sensor Status</span>
+                  <strong style="color:var(--green);" id="valSensorStatus">Active</strong>
+                </div>
+              </div>
+
+              <div class="mini-stat-card">
+                <div class="mini-stat-icon" style="color:var(--amber); background:rgba(255, 176, 32, 0.12);">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                </div>
+                <div class="mini-stat-text">
+                  <span>Temperature Alerts</span>
+                  <strong style="color:var(--amber);" id="valAlertsCount">3</strong>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Card 5: Device Status -->
+          <div class="card">
+            <div class="card-header-flex">
+              <span class="card-title">
+                <svg class="title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+                Device Status
+              </span>
+              <div class="pill pill-green" style="padding:2px 8px; font-size:0.68rem;">
+                <span class="pill-green-dot"></span>
+                <span>Ready</span>
+              </div>
+            </div>
+
+            <div class="device-table">
+              <div class="device-row">
+                <span class="device-row-label">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/></svg>
+                  Arduino Connection
+                </span>
+                <span class="device-row-val" id="devConnStatus" style="color:var(--red);">● Disconnected</span>
+              </div>
+
+              <div class="device-row">
+                <span class="device-row-label">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2"/></svg>
+                  Sensor (LM35)
+                </span>
+                <span class="device-row-val" id="devSensorStatus" style="color:var(--green);">● Active</span>
+              </div>
+
+              <div class="device-row">
+                <span class="device-row-label">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z"/></svg>
+                  Latest Reading
+                </span>
+                <span class="device-row-val" id="devLatestReading" style="color:var(--cyan); font-family:'JetBrains Mono';">30.2°C</span>
+              </div>
+
+              <div class="device-row">
+                <span class="device-row-label">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/></svg>
+                  Connection Method
+                </span>
+                <span class="device-row-val" style="color:var(--text-muted);">Web Serial API</span>
+              </div>
+
+              <div class="device-row">
+                <span class="device-row-label">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                  Last Communication
+                </span>
+                <span class="device-row-val" id="devLastComm" style="font-family:'JetBrains Mono';">10:42:15 AM</span>
+              </div>
+            </div>
+
+            <!-- Blue-Purple Connect Button -->
+            <button class="btn-connect-full" onclick="toggleSerialConnection()">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+              <span id="btnConnectDeviceText">Connect Arduino</span>
+            </button>
+          </div>
+
+          <!-- Card 6: Demo Sandbox -->
+          <div class="card" id="demo-sandbox">
+            <div class="card-header-flex">
+              <span class="card-title">
+                <svg class="title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                Demo Sandbox
+              </span>
+              <div class="pill" style="border:1px solid rgba(0, 229, 255, 0.4); color:var(--cyan); padding:2px 8px; font-size:0.65rem; font-family:'JetBrains Mono';">
+                DEMO MODE
+              </div>
+            </div>
+
+            <p class="sandbox-subtitle">Simulate different temperature scenarios</p>
+
+            <!-- Main Gradient Start Demo Button -->
+            <button class="btn-start-demo" id="btnMainDemo" onclick="toggleDemoMode()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              <span id="btnMainDemoText">Start Demo</span>
+            </button>
+
+            <!-- Middle 2 Grid: Heat Wave & Cool Down -->
+            <div class="sandbox-2grid">
+              <button class="btn-heatwave" onclick="triggerScenario('HEAT_WAVE')">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
+                Heat Wave (36°C)
+              </button>
+              <button class="btn-cooldown" onclick="triggerScenario('COOL_DOWN')">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="2" x2="12" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/><line x1="19.07" y1="4.93" x2="4.93" y2="19.07"/></svg>
+                Cool Down (26°C)
+              </button>
+            </div>
+
+            <!-- Full-width Sensor Error Button -->
+            <button class="btn-sensor-error" onclick="triggerScenario('SENSOR_FAULT')">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+              Sensor Error
+            </button>
+
+            <!-- Reset Demo Button -->
+            <button class="btn-reset-demo" onclick="resetDemo()">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+              Reset Demo
+            </button>
+          </div>
+
+        </div>
+
+        <!-- ====================================================================
+             BOTTOM SECTION: ALERTS & EVENTS (HORIZONTAL CARDS LIKE REFERENCE)
+             ==================================================================== -->
+        <div class="card alerts-events-card" id="alerts">
+          <div class="card-header-flex">
+            <span class="card-title">
+              <svg class="title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+              Alerts & Events
+            </span>
+            <a href="javascript:void(0)" onclick="clearEventLog()" style="font-size:0.75rem; color:var(--text-muted); text-decoration:none; display:flex; align-items:center; gap:4px;">
+              View All &rarr;
+            </a>
+          </div>
+
+          <div class="alerts-grid-horizontal" id="alertsListRow">
+            <!-- Event 1: Fan Turned ON -->
+            <div class="event-tile">
+              <div class="event-icon-circle icon-green-fan">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 9a3 3 0 0 0-3-3H6a3 3 0 0 0 0 6h3"/><path d="M15 12a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v3"/></svg>
+              </div>
+              <div class="event-info">
+                <span>Fan turned ON</span>
+                <time>10:28 AM</time>
+              </div>
+            </div>
+
+            <!-- Event 2: Temp Above Threshold -->
+            <div class="event-tile">
+              <div class="event-icon-circle icon-amber-temp">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z"/></svg>
+              </div>
+              <div class="event-info">
+                <span>Temperature above threshold</span>
+                <time>10:24 AM</time>
+              </div>
+            </div>
+
+            <!-- Event 3: Demo Mode Started -->
+            <div class="event-tile">
+              <div class="event-icon-circle icon-blue-demo">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              </div>
+              <div class="event-info">
+                <span>Demo mode started</span>
+                <time>10:15 AM</time>
+              </div>
+            </div>
+
+            <!-- Event 4: Fan Turned OFF -->
+            <div class="event-tile">
+              <div class="event-icon-circle icon-cyan-fan">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 15a3 3 0 0 0 3 3h3a3 3 0 0 0 0-6h-3"/><path d="M9 12a3 3 0 0 0-3 3v3a3 3 0 0 0 6 0v-3"/></svg>
+              </div>
+              <div class="event-info">
+                <span>Fan turned OFF</span>
+                <time>09:52 AM</time>
+              </div>
+            </div>
+
+            <!-- Event 5: Sensor Error -->
+            <div class="event-tile">
+              <div class="event-icon-circle icon-red-alert">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/></svg>
+              </div>
+              <div class="event-info">
+                <span>Sensor error detected</span>
+                <time>09:34 AM</time>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </main>
+
+    </div>
+  </div>
+
+  <!-- ========================================================================
+       MODAL: SETTINGS & THRESHOLDS
+       ======================================================================== -->
+  <div class="modal-overlay" id="settingsModal">
+    <div class="modal-box">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+        <h3 style="font-family:'Outfit'; font-size:1.15rem; color:#FFFFFF;">Threshold & System Settings</h3>
+        <button onclick="closeSettingsModal()" style="background:none; border:none; color:var(--text-muted); font-size:1.3rem; cursor:pointer;">&times;</button>
+      </div>
+
+      <div style="display:flex; flex-direction:column; gap:14px; font-size:0.82rem;">
+        <div>
+          <label style="display:block; color:var(--text-muted); margin-bottom:5px;">Fan Activation Threshold (°C)</label>
+          <div style="display:flex; align-items:center; gap:10px;">
+            <input type="number" id="inputThreshold" value="32.0" step="0.5" style="background:#071228; border:1px solid var(--border-card); color:#FFFFFF; padding:8px 12px; border-radius:6px; font-family:'JetBrains Mono'; width:100px;">
+            <span style="color:var(--text-muted);">Cut-off via hysteresis at <strong id="modalCutOffText" style="color:var(--green);">30.0°C</strong></span>
+          </div>
+        </div>
+
+        <div>
+          <label style="display:block; color:var(--text-muted); margin-bottom:5px;">Temperature Unit</label>
+          <div style="display:flex; gap:8px;">
+            <button class="mode-btn active" id="btnUnitC" onclick="setTempUnit('C')">Celsius (°C)</button>
+            <button class="mode-btn" id="btnUnitF" onclick="setTempUnit('F')">Fahrenheit (°F)</button>
+          </div>
+        </div>
+
+        <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:14px;">
+          <button class="btn-reset-demo" style="width:auto; padding:6px 14px;" onclick="closeSettingsModal()">Cancel</button>
+          <button class="btn-gradient" style="padding:6px 18px;" onclick="saveThresholdSetting()">Save Settings</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toast-container"></div>
+
+  <!-- ========================================================================
+       APPLICATION SCRIPT & SERIAL ENGINE
+       ======================================================================== -->
   <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          fontFamily: {
-            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
-            display: ['"Outfit"', 'sans-serif'],
-          },
-          colors: {
-            brand: {
-              50: '#ecfdf5',
-              100: '#d1fae5',
-              200: '#a7f3d0',
-              300: '#6ee7b7',
-              400: '#34d399',
-              500: '#10b981',
-              600: '#059669', // Primary Cooperative Emerald
-              700: '#047857',
-              800: '#065f46',
-              900: '#064e3b',
-              950: '#022c22',
+    /* Application State */
+    const appState = {
+      connected: false,
+      isDemo: false,
+      serialPort: null,
+      serialReader: null,
+      serialWriter: null,
+      readableStreamClosed: null,
+      writableStreamClosed: null,
+
+      temperature: 30.2,
+      prevTemperature: 29.4,
+      fanState: true,
+      threshold: 32.0,
+      hysteresis: 2.0,
+      mode: 'AUTO',
+      unit: 'C',
+
+      peakTemp: 35.6,
+      minTemp: 24.8,
+      tempSum: 89.1,
+      totalSamples: 3,
+      alertsCount: 3,
+      fanRunSeconds: 8100, // 2h 15m
+
+      demoInterval: null,
+      simErrorInjected: false,
+      chartFilter: '1h'
+    };
+
+    /* Chart Buffers */
+    const chartLabels = ['9:42', '9:52', '10:02', '10:12', '10:22', '10:32', '10:42'];
+    const chartDataPoints = [26.8, 28.5, 30.6, 29.2, 31.0, 31.8, 30.2];
+    const thresholdPoints = [32.0, 32.0, 32.0, 32.0, 32.0, 32.0, 32.0];
+    let myChart = null;
+
+    window.addEventListener('DOMContentLoaded', () => {
+      initChart();
+      updateGauge(appState.temperature);
+      updateClock();
+      setInterval(updateClock, 1000);
+
+      // Fan runtime incrementer
+      setInterval(() => {
+        if (appState.fanState) {
+          appState.fanRunSeconds++;
+          const hrs = Math.floor(appState.fanRunSeconds / 3600);
+          const mins = Math.floor((appState.fanRunSeconds % 3600) / 60);
+          document.getElementById('valFanRuntime').innerText = `${hrs}h ${mins}m`;
+        }
+      }, 1000);
+    });
+
+    // Real-Time Clock
+    function updateClock() {
+      const now = new Date();
+      const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      const dateStr = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+      const secStr = now.toLocaleTimeString([], { hour12: true });
+
+      const clockTimeEl = document.getElementById('clockTime');
+      const clockDateEl = document.getElementById('clockDate');
+      const lastUpdatedEl = document.getElementById('valLastUpdated');
+      const devLastCommEl = document.getElementById('devLastComm');
+
+      if (clockTimeEl) clockTimeEl.innerText = timeStr;
+      if (clockDateEl) clockDateEl.innerText = dateStr;
+      if (lastUpdatedEl) lastUpdatedEl.innerText = secStr;
+      if (devLastCommEl) devLastCommEl.innerText = secStr;
+    }
+
+    // Chart.js Setup matching exact reference styling
+    function initChart() {
+      const ctx = document.getElementById('tempChart');
+      if (!ctx || typeof Chart === 'undefined') return;
+
+      const gradient = ctx.getContext('2d').createLinearGradient(0, 0, 0, 150);
+      gradient.addColorStop(0, 'rgba(0, 229, 255, 0.28)');
+      gradient.addColorStop(1, 'rgba(22, 139, 255, 0.0)');
+
+      myChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: [...chartLabels],
+          datasets: [
+            {
+              label: 'Ambient Temp',
+              data: [...chartDataPoints],
+              borderColor: '#00E5FF',
+              backgroundColor: gradient,
+              borderWidth: 2.2,
+              tension: 0.35,
+              fill: true,
+              pointRadius: 4,
+              pointBackgroundColor: '#071228',
+              pointBorderColor: '#00E5FF',
+              pointBorderWidth: 2,
+              pointHoverRadius: 6,
+              pointHoverBackgroundColor: '#00E5FF'
             },
-            trust: {
-              50: '#eff6ff',
-              100: '#dbeafe',
-              200: '#bfdbfe',
-              300: '#93c5fd',
-              400: '#60a5fa',
-              500: '#3b82f6',
-              600: '#2563eb', // Trust Blue
-              700: '#1d4ed8',
-              800: '#1e40af',
-              900: '#1e3a8a',
-              950: '#0f172a', // Deep Navy Slate
-            },
-            accent: {
-              50: '#eef2ff',
-              100: '#e0e7ff',
-              500: '#6366f1',
-              600: '#4f46e5',
+            {
+              label: 'Threshold (32°C)',
+              data: [...thresholdPoints],
+              borderColor: '#FF4D6D',
+              borderWidth: 1.6,
+              borderDash: [5, 4],
+              pointRadius: 0,
+              fill: false
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: '#071228',
+              borderColor: '#00E5FF',
+              borderWidth: 1,
+              titleColor: '#91A7C7',
+              bodyColor: '#FFFFFF',
+              titleFont: { size: 10, family: 'Plus Jakarta Sans' },
+              bodyFont: { size: 12, weight: 'bold', family: 'JetBrains Mono' },
+              callbacks: {
+                label: function(c) {
+                  return ` ${c.parsed.y.toFixed(1)}°C`;
+                }
+              }
             }
           },
-          boxShadow: {
-            'glow': '0 0 25px -5px rgba(5, 150, 105, 0.25)',
-            'glow-blue': '0 0 25px -5px rgba(37, 99, 235, 0.25)',
-            'card': '0 4px 20px -2px rgba(15, 23, 42, 0.06), 0 2px 6px -1px rgba(15, 23, 42, 0.04)',
-            'card-hover': '0 12px 30px -4px rgba(15, 23, 42, 0.12), 0 4px 12px -2px rgba(15, 23, 42, 0.08)',
+          scales: {
+            x: {
+              grid: { color: 'rgba(23, 61, 104, 0.25)' },
+              ticks: { color: '#5C769D', font: { family: 'JetBrains Mono', size: 9 } }
+            },
+            y: {
+              min: 20,
+              max: 40,
+              stepSize: 5,
+              grid: { color: 'rgba(23, 61, 104, 0.3)' },
+              ticks: {
+                color: '#91A7C7',
+                font: { family: 'JetBrains Mono', size: 9 },
+                callback: function(v) { return v + '°C'; }
+              }
+            }
           }
+        }
+      });
+    }
+
+    // Radial Gauge Arc calculation
+    function updateGauge(temp) {
+      const arc = document.getElementById('gaugeArcFill');
+      if (!arc) return;
+      // Arc circumference = 2 * pi * 56 = 352px
+      // 270 degree span = 264px max stroke
+      // Scale range 15°C to 45°C
+      const clamped = Math.max(15, Math.min(45, temp));
+      const pct = (clamped - 15) / (45 - 15);
+      const strokeVal = pct * 264;
+      const offset = 264 - strokeVal;
+      arc.style.strokeDashoffset = offset;
+
+      // Update text
+      document.getElementById('valTemperature').innerHTML = `${temp.toFixed(1)}<span style="font-size:1.2rem; font-weight:600; color:var(--cyan);">${appState.unit === 'F' ? '°F' : '°C'}</span>`;
+      
+      const badge = document.getElementById('tempCategoryBadge');
+      if (temp < 25) {
+        badge.innerText = 'Cool';
+        badge.style.color = '#00E5FF';
+        badge.style.borderColor = 'rgba(0, 229, 255, 0.4)';
+      } else if (temp < 32) {
+        badge.innerText = 'Normal';
+        badge.style.color = '#00E6A0';
+        badge.style.borderColor = 'rgba(0, 230, 160, 0.4)';
+      } else if (temp < 38) {
+        badge.innerText = 'Warm';
+        badge.style.color = '#FFB020';
+        badge.style.borderColor = 'rgba(255, 176, 32, 0.4)';
+      } else {
+        badge.innerText = 'High Temp';
+        badge.style.color = '#FF4D6D';
+        badge.style.borderColor = 'rgba(255, 77, 109, 0.4)';
+      }
+    }
+
+    // ==========================================
+    // SERIAL & TELEMETRY PARSER
+    // Protocol: TEMP:xx.x,FAN:x,TH:xx.x,MODE:x,STAT:x
+    // ==========================================
+    function parseTelemetryLine(line) {
+      line = line.trim();
+      if (!line) return;
+
+      if (line.includes('TEMP:') && line.includes('FAN:')) {
+        const tokens = line.split(',');
+        const data = {};
+        for (const t of tokens) {
+          const [k, v] = t.split(':');
+          if (k && v !== undefined) data[k.trim()] = v.trim();
+        }
+
+        if (data.TEMP === 'ERR') {
+          renderSensorError();
+          return;
+        }
+
+        const temp = parseFloat(data.TEMP);
+        if (!isNaN(temp)) {
+          appState.prevTemperature = appState.temperature;
+          appState.temperature = temp;
+
+          // Stats
+          appState.totalSamples++;
+          appState.tempSum += temp;
+          if (temp > appState.peakTemp) appState.peakTemp = temp;
+          if (temp < appState.minTemp) appState.minTemp = temp;
+          const avg = appState.tempSum / appState.totalSamples;
+
+          document.getElementById('statCurTemp').innerText = `${temp.toFixed(1)}°C`;
+          document.getElementById('statPeakTemp').innerText = `${appState.peakTemp.toFixed(1)}°C`;
+          document.getElementById('statMinTemp').innerText = `${appState.minTemp.toFixed(1)}°C`;
+          document.getElementById('statAvgTemp').innerText = `${avg.toFixed(1)}°C`;
+          document.getElementById('devLatestReading').innerText = `${temp.toFixed(1)}°C`;
+
+          // Delta
+          const delta = temp - appState.prevTemperature;
+          const deltaEl = document.getElementById('tempDeltaIndicator');
+          if (delta > 0.05) {
+            deltaEl.innerHTML = `▲ +${delta.toFixed(1)}°C`;
+            deltaEl.style.color = '#FF4D6D';
+          } else if (delta < -0.05) {
+            deltaEl.innerHTML = `▼ ${delta.toFixed(1)}°C`;
+            deltaEl.style.color = '#38BDF8';
+          } else {
+            deltaEl.innerHTML = `● 0.0°C`;
+            deltaEl.style.color = 'var(--text-muted)';
+          }
+        }
+
+        // Fan State
+        const fanIsOn = (data.FAN === '1');
+        setFanUI(fanIsOn);
+
+        // Threshold
+        if (data.TH) {
+          const th = parseFloat(data.TH);
+          if (!isNaN(th)) {
+            appState.threshold = th;
+            document.getElementById('valThresholdDisplay').innerText = `${th.toFixed(1)}°C`;
+            document.getElementById('boxAutoTh').innerText = `${th.toFixed(1)}°C`;
+          }
+        }
+
+        updateGauge(appState.temperature);
+        pushChartPoint(appState.temperature);
+      }
+    }
+
+    function setFanUI(isOn) {
+      appState.fanState = isOn;
+      const pill = document.getElementById('fanStatusPill');
+      const dot = document.getElementById('fanStatusDot');
+      const text = document.getElementById('fanStatusText');
+      const housing = document.getElementById('fanHousing');
+      const speedPct = document.getElementById('fanSpeedPct');
+      const speedFill = document.getElementById('fanSpeedFill');
+
+      if (isOn) {
+        pill.className = 'pill pill-green';
+        dot.className = 'pill-green-dot';
+        text.innerText = 'ON';
+        housing.classList.add('active');
+        speedPct.innerText = '70%';
+        speedFill.style.width = '70%';
+      } else {
+        pill.className = 'pill pill-red';
+        dot.className = 'pill-red-dot';
+        text.innerText = 'OFF';
+        housing.classList.remove('active');
+        speedPct.innerText = '0%';
+        speedFill.style.width = '0%';
+      }
+    }
+
+    function pushChartPoint(temp) {
+      if (!myChart) return;
+      const now = new Date();
+      const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+      chartLabels.push(timeStr);
+      chartDataPoints.push(temp);
+      thresholdPoints.push(appState.threshold);
+
+      if (chartLabels.length > 15) {
+        chartLabels.shift();
+        chartDataPoints.shift();
+        thresholdPoints.shift();
+      }
+
+      myChart.data.labels = [...chartLabels];
+      myChart.data.datasets[0].data = [...chartDataPoints];
+      myChart.data.datasets[1].data = [...thresholdPoints];
+      myChart.update('none');
+    }
+
+    // ==========================================
+    // DEMO ENGINE
+    // ==========================================
+    function toggleDemoMode() {
+      if (appState.isDemo) {
+        stopDemoMode();
+      } else {
+        startDemoMode();
+      }
+    }
+
+    function startDemoMode() {
+      if (appState.connected) disconnectSerial();
+
+      appState.isDemo = true;
+      document.getElementById('demoBanner').classList.add('active');
+      document.getElementById('btnMainDemoText').innerText = 'Stop Demo';
+      document.getElementById('valDataSource').innerText = 'Demo Simulation';
+      document.getElementById('sourceDot').style.background = '#00E5FF';
+
+      pushAlertEvent('icon-blue-demo', 'Demo mode started');
+      showToast('Demo Mode Active');
+
+      if (appState.demoInterval) clearInterval(appState.demoInterval);
+      appState.demoInterval = setInterval(runDemoTick, 1200);
+      runDemoTick();
+    }
+
+    function stopDemoMode() {
+      appState.isDemo = false;
+      if (appState.demoInterval) {
+        clearInterval(appState.demoInterval);
+        appState.demoInterval = null;
+      }
+      document.getElementById('demoBanner').classList.remove('active');
+      document.getElementById('btnMainDemoText').innerText = 'Start Demo';
+      showToast('Demo Mode Stopped');
+    }
+
+    function resetDemo() {
+      appState.simErrorInjected = false;
+      appState.temperature = 30.2;
+      setFanUI(true);
+      updateGauge(30.2);
+      pushAlertEvent('icon-cyan-fan', 'Demo simulation reset (30.2°C)');
+      showToast('Demo Reset to 30.2°C');
+    }
+
+    function runDemoTick() {
+      if (!appState.isDemo) return;
+
+      if (appState.simErrorInjected) {
+        parseTelemetryLine('TEMP:ERR,FAN:0,TH:32.0,MODE:AUTO,STAT:ERROR');
+        return;
+      }
+
+      // Natural ambient fluctuation
+      const drift = (Math.random() - 0.48) * 0.2;
+      let newTemp = Math.round((appState.temperature + drift) * 10) / 10;
+
+      // Hysteresis
+      let fan = appState.fanState;
+      if (appState.mode === 'AUTO') {
+        if (!fan && newTemp >= appState.threshold) fan = true;
+        else if (fan && newTemp < (appState.threshold - appState.hysteresis)) fan = false;
+      }
+
+      parseTelemetryLine(`TEMP:${newTemp.toFixed(1)},FAN:${fan ? 1 : 0},TH:${appState.threshold.toFixed(1)},MODE:${appState.mode},STAT:NORMAL`);
+    }
+
+    function triggerScenario(type) {
+      if (!appState.isDemo) startDemoMode();
+
+      if (type === 'HEAT_WAVE') {
+        appState.simErrorInjected = false;
+        appState.temperature = 36.4;
+        setFanUI(true);
+        updateGauge(36.4);
+        pushChartPoint(36.4);
+        pushAlertEvent('icon-amber-temp', 'Heat wave simulation (36.4°C)');
+        showToast('Heat Wave: Fan Trips ON!');
+      } else if (type === 'COOL_DOWN') {
+        appState.simErrorInjected = false;
+        appState.temperature = 26.2;
+        setFanUI(false);
+        updateGauge(26.2);
+        pushChartPoint(26.2);
+        pushAlertEvent('icon-cyan-fan', 'Fan turned OFF (Cooled to 26.2°C)');
+        showToast('Cool Down: Fan Shuts OFF');
+      } else if (type === 'SENSOR_FAULT') {
+        appState.simErrorInjected = !appState.simErrorInjected;
+        if (appState.simErrorInjected) {
+          renderSensorError();
+        } else {
+          appState.temperature = 30.2;
+          updateGauge(30.2);
+          showToast('Sensor Error Cleared');
         }
       }
     }
+
+    function renderSensorError() {
+      document.getElementById('valTemperature').innerHTML = `ERR`;
+      const badge = document.getElementById('tempCategoryBadge');
+      badge.innerText = 'Fault';
+      badge.style.color = '#FF4D6D';
+      badge.style.borderColor = '#FF4D6D';
+      setFanUI(false);
+      pushAlertEvent('icon-red-alert', 'Sensor error detected');
+      showToast('SENSOR ERROR: Reading Disconnected!');
+    }
+
+    function pushAlertEvent(iconClass, desc) {
+      const container = document.getElementById('alertsListRow');
+      if (!container) return;
+      const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+      let iconSvg = '';
+      if (iconClass === 'icon-green-fan' || iconClass === 'icon-cyan-fan') {
+        iconSvg = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 9a3 3 0 0 0-3-3H6a3 3 0 0 0 0 6h3"/></svg>`;
+      } else if (iconClass === 'icon-amber-temp') {
+        iconSvg = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z"/></svg>`;
+      } else if (iconClass === 'icon-blue-demo') {
+        iconSvg = `<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>`;
+      } else {
+        iconSvg = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/></svg>`;
+      }
+
+      const tile = document.createElement('div');
+      tile.className = 'event-tile';
+      tile.innerHTML = `
+        <div class="event-icon-circle ${iconClass}">${iconSvg}</div>
+        <div class="event-info">
+          <span>${desc}</span>
+          <time>${timeStr}</time>
+        </div>
+      `;
+
+      container.insertBefore(tile, container.firstChild);
+      while (container.children.length > 5) {
+        container.removeChild(container.lastChild);
+      }
+    }
+
+    function clearEventLog() {
+      showToast('All events logged');
+    }
+
+    // ==========================================
+    // HARDWARE WEB SERIAL API
+    // ==========================================
+    async function toggleSerialConnection() {
+      if (appState.connected) {
+        await disconnectSerial();
+      } else {
+        await connectSerial();
+      }
+    }
+
+    async function connectSerial() {
+      if (!('serial' in navigator)) {
+        alert('Web Serial API is supported in Google Chrome, Microsoft Edge, and Opera desktop. Click "Start Demo" to run simulation!');
+        return;
+      }
+
+      try {
+        appState.serialPort = await navigator.serial.requestPort();
+        await appState.serialPort.open({ baudRate: 9600 });
+
+        appState.connected = true;
+        updateConnectionUI(true);
+        showToast('Arduino Uno Connected (9600 Baud)!');
+
+        readSerialStream();
+      } catch (err) {
+        console.error(err);
+        showToast('Connection cancelled or locked');
+      }
+    }
+
+    async function readSerialStream() {
+      const textDecoder = new TextDecoderStream();
+      appState.readableStreamClosed = appState.serialPort.readable.pipeTo(textDecoder.writable);
+      appState.serialReader = textDecoder.readable.getReader();
+
+      let partialLine = '';
+      try {
+        while (true) {
+          const { value, done } = await appState.serialReader.read();
+          if (done) break;
+          if (value) {
+            partialLine += value;
+            const lines = partialLine.split(/\r?\n/);
+            partialLine = lines.pop();
+            for (const line of lines) {
+              parseTelemetryLine(line);
+            }
+          }
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        if (appState.serialReader) appState.serialReader.releaseLock();
+      }
+    }
+
+    async function disconnectSerial() {
+      try {
+        if (appState.serialReader) {
+          await appState.serialReader.cancel();
+          await appState.readableStreamClosed.catch(() => {});
+          appState.serialReader = null;
+        }
+        if (appState.serialPort) {
+          await appState.serialPort.close();
+          appState.serialPort = null;
+        }
+      } catch (e) {}
+      appState.connected = false;
+      updateConnectionUI(false);
+      showToast('Arduino Disconnected');
+    }
+
+    function updateConnectionUI(connected) {
+      const pill = document.getElementById('arduinoPill');
+      const dot = document.getElementById('arduinoDot');
+      const text = document.getElementById('arduinoPillText');
+      const btnHeader = document.getElementById('btnConnectHeaderText');
+      const btnDevice = document.getElementById('btnConnectDeviceText');
+      const devConn = document.getElementById('devConnStatus');
+      const source = document.getElementById('valDataSource');
+
+      if (connected) {
+        pill.className = 'pill pill-green';
+        dot.className = 'pill-green-dot';
+        text.innerText = 'Arduino Uno Connected';
+        btnHeader.innerText = 'Disconnect';
+        btnDevice.innerText = 'Disconnect';
+        devConn.innerHTML = '● Connected';
+        devConn.style.color = 'var(--green)';
+        source.innerText = 'Real Arduino (USB)';
+        document.getElementById('sourceDot').style.background = 'var(--green)';
+      } else {
+        pill.className = 'pill pill-red';
+        dot.className = 'pill-red-dot';
+        text.innerText = 'Arduino Disconnected';
+        btnHeader.innerText = 'Connect Arduino';
+        btnDevice.innerText = 'Connect Arduino';
+        devConn.innerHTML = '● Disconnected';
+        devConn.style.color = 'var(--red)';
+        source.innerText = 'Disconnected';
+        document.getElementById('sourceDot').style.background = 'var(--text-dim)';
+      }
+    }
+
+    function setSystemMode(m) {
+      appState.mode = m;
+      document.getElementById('btnModeAuto').className = m === 'AUTO' ? 'mode-btn active' : 'mode-btn';
+      document.getElementById('btnModeManual').className = m === 'MANUAL' ? 'mode-btn active' : 'mode-btn';
+      showToast(`Mode: ${m}`);
+    }
+
+    function openSettingsModal() {
+      document.getElementById('settingsModal').classList.add('active');
+    }
+
+    function closeSettingsModal() {
+      document.getElementById('settingsModal').classList.remove('active');
+    }
+
+    function saveThresholdSetting() {
+      const th = parseFloat(document.getElementById('inputThreshold').value);
+      if (!isNaN(th)) {
+        appState.threshold = th;
+        document.getElementById('valThresholdDisplay').innerText = `${th.toFixed(1)}°C`;
+        document.getElementById('boxAutoTh').innerText = `${th.toFixed(1)}°C`;
+        document.getElementById('modalCutOffText').innerText = `${(th - appState.hysteresis).toFixed(1)}°C`;
+        showToast(`Threshold updated to ${th.toFixed(1)}°C`);
+      }
+      closeSettingsModal();
+    }
+
+    function setTempUnit(u) {
+      appState.unit = u;
+      document.getElementById('btnUnitC').className = u === 'C' ? 'mode-btn active' : 'mode-btn';
+      document.getElementById('btnUnitF').className = u === 'F' ? 'mode-btn active' : 'mode-btn';
+      updateGauge(appState.temperature);
+    }
+
+    function setChartFilter(f, btn) {
+      document.querySelectorAll('.chart-btn').forEach(b => b.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+      showToast(`Filter: ${f.toUpperCase()}`);
+    }
+
+    function showToast(msg) {
+      const c = document.getElementById('toast-container');
+      if (!c) return;
+      const t = document.createElement('div');
+      t.className = 'toast-msg';
+      t.innerText = msg;
+      c.appendChild(t);
+      setTimeout(() => {
+        t.style.opacity = '0';
+        t.style.transform = 'translateY(10px)';
+        t.style.transition = 'all 0.3s';
+        setTimeout(() => t.remove(), 300);
+      }, 2400);
+    }
+
+    function toggleMobileSidebar() {
+      document.getElementById('sidebar').classList.toggle('mobile-open');
+    }
+
+    function setActiveNav(el) {
+      document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+      el.classList.add('active');
+      document.getElementById('sidebar').classList.remove('mobile-open');
+    }
+
+    function scrollToSection(id) {
+      const el = document.getElementById(id);
+      if (el) el.scrollIntoView({ behavior: 'smooth' });
+    }
   </script>
-
-  <!-- Lucide Icons -->
-  <script src="https://unpkg.com/lucide@latest"></script>
-
-  <!-- Chart.js for Admin & Worker Analytics -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-  <!-- Canvas Confetti for Celebration on Booking/Job Completion -->
-  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-
-  <!-- Custom Stylesheet -->
-  <link rel="stylesheet" href="./css/style.css" />
-</head>
-<body class="bg-slate-50 text-slate-800 font-sans antialiased min-h-screen flex flex-col selection:bg-brand-500 selection:text-white">
-  
-  <!-- Top Global Header / Navigation -->
-  <div id="navbar-container"></div>
-
-  <!-- Dynamic Main Content Root -->
-  <main id="app" class="flex-grow"></main>
-
-  <!-- Global Footer -->
-  <div id="footer-container"></div>
-
-  <!-- Floating 1-Click Demo Switcher Bar for Hackathon Presentation -->
-  <div id="demo-switcher-container"></div>
-
-  <!-- Global Toast Notification Center -->
-  <div id="toast-container" class="fixed bottom-6 right-6 z-50 flex flex-col gap-2 pointer-events-none"></div>
-
-  <!-- Global Modal Host -->
-  <div id="modal-container"></div>
-
-  <!-- Core Scripts -->
-  <script type="module" src="./js/app.js"></script>
 </body>
 </html>

@@ -3,427 +3,712 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SmartCool — Temperature-Based Smart Cooling System</title>
-  <meta name="description" content="Intelligent IoT cooling system dashboard with real-time temperature telemetry, automatic fan hysteresis control, and USB Web Serial communication." />
+  <title>SmartCool Industrial IoT Dashboard</title>
+  <meta name="description" content="SmartCool Industrial IoT Dashboard with Real-Time Thermal Telemetry, Hysteresis Fan Control, and Web Serial API." />
   
-  <!-- Modern Font from Google Fonts (with system fallbacks) -->
+  <!-- Favicon: Cyan Snowflake -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2300E5FF' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'><line x1='12' y1='2' x2='12' y2='22'/><line x1='2' y1='12' x2='22' y2='12'/><line x1='4.93' y1='4.93' x2='19.07' y2='19.07'/><line x1='19.07' y1='4.93' x2='4.93' y2='19.07'/><circle cx='12' cy='12' r='2.5' fill='%237847FF'/></svg>" />
+
+  <!-- Fonts: Plus Jakarta Sans & Outfit & JetBrains Mono -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   
-  <!-- Chart.js CDN with local graceful fallback -->
+  <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
   <style>
     /* ==========================================================================
-       SMARTCOOL RED & BLACK THEME - DESIGN SYSTEM
+       EXACT REFERENCE SCREENSHOT THEME & DESIGN TOKENS
        ========================================================================== */
     :root {
-      --bg-main: #090A0D;
-      --bg-card: #14161B;
-      --bg-card-hover: #191c22;
-      --bg-card-subtle: #0f1116;
-      --primary-red: #FF303B;
-      --secondary-red: #D91F2B;
-      --red-glow: rgba(255, 48, 59, 0.35);
-      --red-subtle: rgba(255, 48, 59, 0.12);
-      --red-border: rgba(255, 48, 59, 0.28);
-      --text-main: #F5F5F5;
-      --text-muted: #A1A1AA;
-      --text-dim: #71717A;
-      --border-color: #2B2D33;
-      --border-highlight: #3F424A;
-      --status-normal: #10B981;
-      --status-cooling: #FF303B;
-      --status-warning: #F59E0B;
-      --font-display: 'Outfit', sans-serif;
-      --font-body: 'Plus Jakarta Sans', sans-serif;
-      --font-mono: 'JetBrains Mono', monospace;
+      /* Background Hierarchy */
+      --bg-body: #050B1B;
+      --bg-sidebar: #09132B;
+      --bg-card: #0B1833;
+      --bg-card-subtle: #0E2040;
+      --bg-card-inner: #071228;
+      
+      /* Borders */
+      --border-card: #173D68;
+      --border-subtle: rgba(23, 61, 104, 0.45);
+      --border-active: #00E5FF;
+
+      /* Accent Colors */
+      --cyan: #00E5FF;
+      --cyan-glow: rgba(0, 229, 255, 0.35);
+      --blue: #168BFF;
+      --blue-glow: rgba(22, 139, 255, 0.35);
+      --violet: #7847FF;
+      --violet-glow: rgba(120, 71, 255, 0.4);
+      --purple: #A855F7;
+      
+      /* Status Tints */
+      --green: #00E6A0;
+      --green-glow: rgba(0, 230, 160, 0.3);
+      --amber: #FFB020;
+      --red: #FF4D6D;
+      --red-glow: rgba(255, 77, 109, 0.35);
+
+      /* Typography */
+      --text-main: #FFFFFF;
+      --text-muted: #91A7C7;
+      --text-dim: #5C769D;
+
+      /* Gradient Presets */
+      --grad-primary-btn: linear-gradient(135deg, #00D2FF 0%, #168BFF 50%, #7B42F6 100%);
+      --grad-nav-active: linear-gradient(90deg, #00D2FF 0%, #7B42F6 100%);
+      --grad-arc-gauge: linear-gradient(135deg, #7847FF 0%, #168BFF 40%, #00E5FF 75%, #FF4D6D 100%);
+
+      /* Sizing */
+      --sidebar-width: 240px;
+      --header-height: 64px;
       --radius-sm: 8px;
-      --radius-md: 14px;
-      --radius-lg: 20px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
       --radius-full: 9999px;
-      --shadow-card: 0 10px 30px -5px rgba(0, 0, 0, 0.6), 0 0 1px 1px rgba(255, 255, 255, 0.05);
-      --shadow-glow: 0 0 25px var(--red-glow);
     }
 
-    * {
+    *, *::before, *::after {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
     }
 
+    html {
+      color-scheme: dark;
+      scroll-behavior: smooth;
+    }
+
     body {
-      background-color: var(--bg-main);
+      background-color: var(--bg-body);
       color: var(--text-main);
-      font-family: var(--font-body);
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
       min-height: 100vh;
       overflow-x: hidden;
-      line-height: 1.5;
+      line-height: 1.4;
       background-image: 
-        radial-gradient(circle at 15% 10%, rgba(255, 48, 59, 0.08) 0%, transparent 40%),
-        radial-gradient(circle at 85% 85%, rgba(217, 31, 43, 0.06) 0%, transparent 40%),
-        linear-gradient(to bottom, #090A0D, #0b0c10);
+        radial-gradient(circle at 10% 20%, rgba(22, 139, 255, 0.08) 0%, transparent 45%),
+        radial-gradient(circle at 90% 80%, rgba(120, 71, 255, 0.08) 0%, transparent 45%),
+        linear-gradient(to bottom, #050B1B, #030814);
       background-attachment: fixed;
     }
 
-    /* Subtle grid pattern overlay */
-    body::before {
+    /* Ambient Wave at bottom left like reference */
+    body::after {
       content: "";
       position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background-size: 40px 40px;
-      background-image: 
-        linear-gradient(to right, rgba(255, 255, 255, 0.015) 1px, transparent 1px),
-        linear-gradient(to bottom, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
+      bottom: -150px;
+      left: -150px;
+      width: 500px;
+      height: 500px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(120, 71, 255, 0.12) 0%, rgba(0, 229, 255, 0.05) 50%, transparent 70%);
       pointer-events: none;
       z-index: 0;
     }
 
-    .container {
-      max-width: 1400px;
-      margin: 0 auto;
-      padding: 24px 20px 60px 20px;
+    /* Scrollbars */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: var(--bg-body);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: var(--border-card);
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--cyan);
+    }
+
+    /* ==========================================================================
+       APP SHELL: SIDEBAR + MAIN CONTENT
+       ========================================================================== */
+    .app-layout {
+      display: flex;
+      min-height: 100vh;
       position: relative;
       z-index: 1;
     }
 
-    /* ==========================================================================
-       HEADER & NAVIGATION BAR
-       ========================================================================== */
-    header {
+    /* Left Sidebar */
+    aside.sidebar {
+      width: var(--sidebar-width);
+      background: var(--bg-sidebar);
+      border-right: 1px solid var(--border-card);
       display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 16px;
-      padding-bottom: 24px;
-      margin-bottom: 24px;
-      border-bottom: 1px solid var(--border-color);
+      flex-direction: column;
+      position: fixed;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      z-index: 50;
+      transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-    }
-
-    .brand-icon {
-      width: 48px;
-      height: 48px;
-      background: linear-gradient(135deg, var(--secondary-red), var(--primary-red));
-      border-radius: var(--radius-md);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 0 20px var(--red-glow);
-      position: relative;
-    }
-
-    .brand-icon svg {
-      width: 28px;
-      height: 28px;
-      color: #fff;
-    }
-
-    .brand-text h1 {
-      font-family: var(--font-display);
-      font-size: 1.65rem;
-      font-weight: 800;
-      letter-spacing: -0.5px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .brand-text h1 span {
-      color: var(--primary-red);
-      text-shadow: 0 0 12px var(--red-glow);
-    }
-
-    .brand-text p {
-      font-size: 0.82rem;
-      color: var(--text-muted);
-      letter-spacing: 0.5px;
-    }
-
-    .header-actions {
+    /* Brand Header with Snowflake */
+    .sidebar-brand {
+      height: var(--header-height);
+      padding: 0 18px;
       display: flex;
       align-items: center;
       gap: 12px;
-      flex-wrap: wrap;
+      border-bottom: 1px solid var(--border-subtle);
     }
 
-    /* Buttons */
-    .btn {
-      display: inline-flex;
+    .brand-snowflake-icon {
+      width: 38px;
+      height: 38px;
+      color: var(--cyan);
+      filter: drop-shadow(0 0 10px var(--cyan-glow));
+      flex-shrink: 0;
+    }
+
+    .brand-text h1 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.25rem;
+      font-weight: 800;
+      letter-spacing: -0.2px;
+      line-height: 1.1;
+      color: #FFFFFF;
+    }
+
+    .brand-text h1 span {
+      color: #A855F7;
+    }
+
+    .brand-text p {
+      font-size: 0.62rem;
+      font-weight: 700;
+      letter-spacing: 0.8px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      margin-top: 1px;
+    }
+
+    /* Sidebar Navigation Links */
+    .sidebar-nav {
+      flex: 1;
+      padding: 16px 12px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .nav-item {
+      display: flex;
       align-items: center;
-      gap: 8px;
-      padding: 10px 18px;
-      font-family: var(--font-body);
-      font-size: 0.88rem;
+      gap: 12px;
+      padding: 10px 14px;
+      border-radius: var(--radius-md);
+      color: var(--text-muted);
+      font-size: 0.86rem;
       font-weight: 600;
-      border-radius: var(--radius-sm);
-      border: 1px solid transparent;
-      cursor: pointer;
-      transition: all 0.2s ease;
       text-decoration: none;
-      white-space: nowrap;
-    }
-
-    .btn:active {
-      transform: scale(0.97);
-    }
-
-    .btn-primary {
-      background: linear-gradient(135deg, var(--secondary-red), var(--primary-red));
-      color: #ffffff;
-      box-shadow: 0 4px 15px var(--red-glow);
-      border: 1px solid rgba(255, 255, 255, 0.15);
-    }
-
-    .btn-primary:hover {
-      box-shadow: 0 6px 22px rgba(255, 48, 59, 0.55);
-      filter: brightness(1.1);
-    }
-
-    .btn-outline {
-      background-color: var(--bg-card);
-      color: var(--text-main);
-      border: 1px solid var(--border-color);
-    }
-
-    .btn-outline:hover {
-      border-color: var(--border-highlight);
-      background-color: var(--bg-card-hover);
-    }
-
-    .btn-danger {
-      background-color: rgba(220, 38, 38, 0.15);
-      color: #ef4444;
-      border: 1px solid rgba(220, 38, 38, 0.35);
-    }
-
-    .btn-danger:hover {
-      background-color: rgba(220, 38, 38, 0.28);
-    }
-
-    .btn-demo {
-      background: linear-gradient(135deg, #1f2937, #111827);
-      color: #fbbf24;
-      border: 1px solid rgba(251, 191, 36, 0.35);
-    }
-
-    .btn-demo:hover {
-      background: #374151;
-      border-color: #fbbf24;
-    }
-
-    .btn-sm {
-      padding: 6px 12px;
-      font-size: 0.8rem;
-    }
-
-    /* Live Connection Indicator Pill */
-    .connection-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 6px 14px;
-      border-radius: var(--radius-full);
-      background: var(--bg-card);
-      border: 1px solid var(--border-color);
-      font-size: 0.82rem;
-      font-weight: 600;
-    }
-
-    .status-dot {
-      width: 9px;
-      height: 9px;
-      border-radius: 50%;
-      background: #71717A;
+      transition: all 0.2s ease;
       position: relative;
     }
 
-    .status-dot.connected {
-      background: #10B981;
-      box-shadow: 0 0 10px #10B981;
+    .nav-item svg {
+      width: 18px;
+      height: 18px;
+      stroke-width: 2.1;
+      color: var(--text-muted);
+      transition: color 0.2s;
+      flex-shrink: 0;
     }
 
-    .status-dot.demo {
-      background: #F59E0B;
-      box-shadow: 0 0 10px #F59E0B;
-      animation: pulse-dot 1.5s infinite;
+    .nav-item:hover {
+      color: var(--text-main);
+      background: rgba(22, 139, 255, 0.08);
     }
 
-    .status-dot.cooling {
-      background: var(--primary-red);
-      box-shadow: 0 0 12px var(--primary-red);
-      animation: pulse-dot 0.8s infinite;
+    .nav-item:hover svg {
+      color: var(--cyan);
     }
 
-    @keyframes pulse-dot {
-      0% { transform: scale(1); opacity: 1; }
-      50% { transform: scale(1.3); opacity: 0.7; }
-      100% { transform: scale(1); opacity: 1; }
+    /* Active Item: Gradient Fill Pill like Reference */
+    .nav-item.active {
+      background: var(--grad-nav-active);
+      color: #FFFFFF;
+      box-shadow: 0 4px 18px rgba(0, 210, 255, 0.35);
+    }
+
+    .nav-item.active svg {
+      color: #FFFFFF;
+      filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.6));
+    }
+
+    .nav-badge-pill {
+      margin-left: auto;
+      background: #FF4D6D;
+      color: #FFFFFF;
+      font-size: 0.68rem;
+      font-weight: 700;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 8px var(--red-glow);
+    }
+
+    /* Sidebar Footer Branding Tagline */
+    .sidebar-footer {
+      padding: 14px 16px;
+      border-top: 1px solid var(--border-subtle);
+      background: rgba(5, 11, 27, 0.4);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .footer-logo-icon {
+      width: 28px;
+      height: 28px;
+      color: #7847FF;
+      flex-shrink: 0;
+    }
+
+    .footer-text {
+      font-size: 0.7rem;
+      line-height: 1.3;
+    }
+
+    .footer-text strong {
+      color: #FFFFFF;
+      display: block;
+      font-weight: 600;
+    }
+
+    .footer-text span {
+      color: var(--text-dim);
+    }
+
+    /* Main Content Wrapper */
+    .main-wrapper {
+      margin-left: var(--sidebar-width);
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      transition: margin-left 0.28s ease;
     }
 
     /* ==========================================================================
-       DEMO MODE BANNER (Prominent Watermark & Switcher)
+       TOPBAR / COMPACT HORIZONTAL HEADER
        ========================================================================== */
+    header.topbar {
+      height: var(--header-height);
+      background: rgba(9, 19, 43, 0.92);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border-card);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      position: sticky;
+      top: 0;
+      z-index: 40;
+    }
+
+    .topbar-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .mobile-menu-btn {
+      display: none;
+      background: transparent;
+      border: 1px solid var(--border-card);
+      color: var(--text-main);
+      padding: 6px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+    }
+
+    .topbar-title h2 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.12rem;
+      font-weight: 700;
+      color: #FFFFFF;
+      line-height: 1.2;
+    }
+
+    .topbar-title p {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+    }
+
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    /* Status Pills */
+    .pill {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 5px 12px;
+      border-radius: var(--radius-full);
+      font-size: 0.74rem;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .pill-green {
+      background: rgba(0, 230, 160, 0.1);
+      border: 1px solid rgba(0, 230, 160, 0.4);
+      color: var(--green);
+    }
+
+    .pill-green-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 8px var(--green-glow);
+    }
+
+    .pill-red {
+      background: rgba(255, 77, 109, 0.1);
+      border: 1px solid rgba(255, 77, 109, 0.4);
+      color: var(--red);
+    }
+
+    .pill-red-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--red);
+      box-shadow: 0 0 8px var(--red-glow);
+    }
+
+    /* Clock Pill */
+    .clock-pill {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      color: var(--text-main);
+      font-size: 0.78rem;
+    }
+
+    .clock-pill svg {
+      width: 16px;
+      height: 16px;
+      color: var(--text-muted);
+    }
+
+    .clock-text {
+      line-height: 1.2;
+    }
+
+    .clock-text strong {
+      display: block;
+      font-weight: 700;
+      font-size: 0.8rem;
+      color: #FFFFFF;
+    }
+
+    .clock-text span {
+      font-size: 0.66rem;
+      color: var(--text-muted);
+    }
+
+    /* Icon Buttons */
+    .btn-icon {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 6px;
+      border-radius: 50%;
+      transition: all 0.2s;
+    }
+
+    .btn-icon:hover {
+      color: var(--cyan);
+      background: rgba(22, 139, 255, 0.1);
+    }
+
+    /* Blue-Purple Gradient Primary Button */
+    .btn-gradient {
+      background: var(--grad-primary-btn);
+      color: #FFFFFF;
+      font-size: 0.82rem;
+      font-weight: 700;
+      padding: 8px 16px;
+      border-radius: var(--radius-full);
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 18px rgba(0, 210, 255, 0.35);
+      transition: all 0.2s ease;
+      text-decoration: none;
+    }
+
+    .btn-gradient:hover {
+      box-shadow: 0 6px 24px rgba(0, 210, 255, 0.55);
+      transform: translateY(-1px);
+    }
+
+    /* ==========================================================================
+       DASHBOARD BODY CONTAINER & GRID
+       ========================================================================== */
+    .dashboard-container {
+      padding: 20px 24px 30px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    /* Demo Active Banner */
     .demo-banner {
       display: none;
       align-items: center;
       justify-content: space-between;
-      gap: 12px;
-      background: linear-gradient(90deg, rgba(245, 158, 11, 0.15), rgba(255, 48, 59, 0.12));
-      border: 1px solid rgba(245, 158, 11, 0.4);
-      padding: 10px 18px;
+      padding: 10px 16px;
+      background: linear-gradient(90deg, rgba(120, 71, 255, 0.2), rgba(0, 229, 255, 0.15));
+      border: 1px solid rgba(0, 229, 255, 0.4);
       border-radius: var(--radius-md);
-      margin-bottom: 24px;
-      color: #FDE68A;
-      font-size: 0.88rem;
-      animation: fadeIn 0.3s ease;
+      font-size: 0.82rem;
     }
 
     .demo-banner.active {
       display: flex;
     }
 
-    .demo-tag {
-      background: #F59E0B;
-      color: #000;
-      font-weight: 800;
-      font-size: 0.7rem;
-      padding: 3px 8px;
-      border-radius: var(--radius-sm);
-      letter-spacing: 0.8px;
-      text-transform: uppercase;
-    }
-
-    /* ==========================================================================
-       TOP METRICS KPI GRID
-       ========================================================================== */
-    .kpi-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-      gap: 20px;
-      margin-bottom: 24px;
-    }
-
+    /* Cards */
     .card {
-      background-color: var(--bg-card);
-      border: 1px solid var(--border-color);
+      background: linear-gradient(180deg, #0E2040 0%, #0B1833 100%);
+      border: 1px solid var(--border-card);
       border-radius: var(--radius-lg);
-      padding: 22px;
-      box-shadow: var(--shadow-card);
+      padding: 18px 20px;
+      box-shadow: 0 8px 24px rgba(2, 6, 18, 0.6);
       position: relative;
       overflow: hidden;
-      transition: border-color 0.25s ease, transform 0.2s ease;
-    }
-
-    .card:hover {
-      border-color: var(--border-highlight);
-    }
-
-    .card-accent-red {
-      border-color: var(--red-border);
-      background: linear-gradient(180deg, rgba(255, 48, 59, 0.04) 0%, var(--bg-card) 100%);
-    }
-
-    .card-accent-red:hover {
-      border-color: rgba(255, 48, 59, 0.5);
+      display: flex;
+      flex-direction: column;
     }
 
     .card-header-flex {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 14px;
+      margin-bottom: 12px;
     }
 
     .card-title {
-      font-size: 0.82rem;
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.02rem;
       font-weight: 700;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.8px;
+      color: #FFFFFF;
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 9px;
     }
 
-    .card-title svg {
-      width: 16px;
-      height: 16px;
-      color: var(--primary-red);
+    .title-icon {
+      width: 20px;
+      height: 20px;
+      color: var(--cyan);
     }
 
-    .kpi-value-row {
+    /* 3-Column Grid for Row 1 & Row 2 */
+    .row-3col {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 18px;
+    }
+
+    /* ==========================================================================
+       ROW 1 - CARD 1: CURRENT TEMPERATURE (Radial Gradient Arc Gauge)
+       ========================================================================== */
+    .temp-card-body {
       display: flex;
-      align-items: baseline;
-      gap: 8px;
-      margin-bottom: 8px;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex: 1;
     }
 
-    .kpi-value {
-      font-family: var(--font-mono);
-      font-size: 2.8rem;
+    .gauge-wrapper {
+      position: relative;
+      width: 146px;
+      height: 146px;
+      flex-shrink: 0;
+    }
+
+    .gauge-svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    .gauge-center-content {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+    }
+
+    .gauge-temp-number {
+      font-family: 'Outfit', sans-serif;
+      font-size: 2.1rem;
+      font-weight: 800;
+      color: #FFFFFF;
+      letter-spacing: -0.5px;
+      line-height: 1;
+    }
+
+    .gauge-status-badge {
+      font-size: 0.68rem;
       font-weight: 700;
-      color: var(--text-main);
-      line-height: 1.1;
+      padding: 3px 10px;
+      border-radius: var(--radius-full);
+      background: rgba(0, 230, 160, 0.12);
+      border: 1px solid rgba(0, 230, 160, 0.4);
+      color: var(--green);
+      margin-top: 6px;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
     }
 
-    .kpi-unit {
-      font-size: 1.25rem;
-      color: var(--text-muted);
-      font-weight: 600;
+    .gauge-status-badge::before {
+      content: "";
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: currentColor;
     }
 
-    .kpi-subtext {
-      font-size: 0.82rem;
+    .temp-details-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      flex: 1;
+      font-size: 0.78rem;
+    }
+
+    .temp-detail-row {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+    }
+
+    .temp-detail-label {
       color: var(--text-muted);
+      font-size: 0.72rem;
+    }
+
+    .temp-detail-val {
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 700;
+      font-size: 0.95rem;
+      color: #FFFFFF;
       display: flex;
       align-items: center;
       gap: 6px;
     }
 
-    /* Fan Status Specific Widget */
-    .fan-card-content {
+    .delta-indicator {
+      font-size: 0.76rem;
+      font-weight: 700;
+      color: var(--red);
+    }
+
+    .edit-threshold-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      margin-left: 6px;
+    }
+
+    .edit-threshold-btn:hover {
+      color: var(--cyan);
+    }
+
+    .data-source-text {
+      color: var(--text-main);
+      font-size: 0.78rem;
       display: flex;
       align-items: center;
+      gap: 6px;
+    }
+
+    .data-source-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--cyan);
+      box-shadow: 0 0 6px var(--cyan-glow);
+    }
+
+    /* ==========================================================================
+       ROW 1 - CARD 2: FAN STATUS
+       ========================================================================== */
+    .fan-card-body {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      flex: 1;
       justify-content: space-between;
+    }
+
+    .fan-middle-row {
+      display: flex;
+      align-items: center;
       gap: 16px;
     }
 
-    .fan-visualizer-box {
-      width: 80px;
-      height: 80px;
+    .fan-housing-circle {
+      width: 82px;
+      height: 82px;
       border-radius: 50%;
-      background: var(--bg-card-subtle);
-      border: 2px solid var(--border-color);
+      background: radial-gradient(circle, #0B1833 0%, #060E22 100%);
+      border: 2px solid var(--border-card);
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.6);
       display: flex;
       align-items: center;
       justify-content: center;
+      flex-shrink: 0;
       position: relative;
-      transition: all 0.4s ease;
     }
 
-    .fan-visualizer-box.spinning {
-      border-color: var(--primary-red);
-      box-shadow: 0 0 25px var(--red-glow), inset 0 0 15px rgba(255, 48, 59, 0.2);
+    .fan-housing-circle.active {
+      border-color: var(--cyan);
+      box-shadow: 0 0 22px var(--cyan-glow);
     }
 
-    .fan-icon-spin {
+    .fan-propeller-svg {
       width: 48px;
       height: 48px;
       color: var(--text-dim);
-      transition: color 0.3s ease;
+      transition: color 0.3s;
     }
 
-    .spinning .fan-icon-spin {
-      color: var(--primary-red);
-      animation: spinFan 0.6s linear infinite;
+    .fan-housing-circle.active .fan-propeller-svg {
+      color: var(--cyan);
+      animation: spinFan 0.7s linear infinite;
     }
 
     @keyframes spinFan {
@@ -431,346 +716,484 @@
       to { transform: rotate(360deg); }
     }
 
-    .badge {
+    .fan-controls-right {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .mode-label {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+    }
+
+    .mode-switcher-pill {
       display: inline-flex;
-      align-items: center;
-      gap: 6px;
+      background: #071228;
+      border: 1px solid var(--border-card);
+      border-radius: var(--radius-full);
+      padding: 3px;
+      gap: 2px;
+      width: fit-content;
+    }
+
+    .mode-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      font-weight: 700;
       padding: 4px 12px;
       border-radius: var(--radius-full);
-      font-size: 0.78rem;
-      font-weight: 700;
-      letter-spacing: 0.5px;
-      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.2s;
     }
 
-    .badge-off {
-      background: rgba(113, 113, 122, 0.15);
-      color: var(--text-muted);
-      border: 1px solid var(--border-color);
+    .mode-btn.active {
+      background: var(--blue);
+      color: #FFFFFF;
+      box-shadow: 0 2px 8px rgba(22, 139, 255, 0.4);
     }
 
-    .badge-on {
-      background: rgba(255, 48, 59, 0.2);
-      color: #ff6b74;
-      border: 1px solid var(--primary-red);
-      box-shadow: 0 0 12px var(--red-glow);
+    .speed-slider-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.74rem;
     }
 
-    .badge-normal {
-      background: rgba(16, 185, 129, 0.15);
-      color: #34d399;
-      border: 1px solid rgba(16, 185, 129, 0.4);
-    }
-
-    .badge-error {
-      background: rgba(239, 68, 68, 0.2);
-      color: #f87171;
-      border: 1px solid #ef4444;
-      animation: pulse-dot 1s infinite;
-    }
-
-    /* ==========================================================================
-       MAIN DASHBOARD LAYOUT (2 Columns)
-       ========================================================================== */
-    .dashboard-layout {
-      display: grid;
-      grid-template-columns: 2fr 1fr;
-      gap: 24px;
-      margin-bottom: 24px;
-    }
-
-    @media (max-width: 1024px) {
-      .dashboard-layout {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    /* Chart Card */
-    .chart-container {
+    .fan-speed-track {
+      flex: 1;
+      height: 6px;
+      background: #071228;
+      border-radius: 4px;
+      border: 1px solid var(--border-card);
       position: relative;
-      height: 320px;
-      width: 100%;
-      margin-top: 10px;
+      overflow: hidden;
     }
 
-    .chart-legend {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      font-size: 0.8rem;
-      color: var(--text-muted);
-      margin-top: 12px;
-      flex-wrap: wrap;
-    }
-
-    .legend-item {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .legend-color {
-      width: 12px;
-      height: 12px;
-      border-radius: 3px;
-    }
-
-    /* Fallback Canvas if CDN blocked */
-    #fallbackCanvas {
-      display: none;
-      width: 100%;
+    .fan-speed-fill {
       height: 100%;
+      width: 70%;
+      background: linear-gradient(90deg, var(--blue), var(--cyan));
+      border-radius: 4px;
+      transition: width 0.3s;
+    }
+
+    .fan-bottom-box {
+      background: rgba(7, 18, 40, 0.7);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      padding: 8px 12px;
+      gap: 8px;
+    }
+
+    .fan-bottom-stat span {
+      display: block;
+      font-size: 0.68rem;
+      color: var(--text-muted);
+    }
+
+    .fan-bottom-stat strong {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.92rem;
+      color: #FFFFFF;
     }
 
     /* ==========================================================================
-       CONTROL PANEL & SETTINGS CARD
+       ROW 1 - CARD 3: TEMPERATURE RANGE (CHART)
        ========================================================================== */
-    .control-group {
-      margin-bottom: 22px;
-      padding-bottom: 18px;
-      border-bottom: 1px solid var(--border-color);
-    }
-
-    .control-group:last-child {
-      margin-bottom: 0;
-      padding-bottom: 0;
-      border-bottom: none;
-    }
-
-    .control-label {
-      font-size: 0.88rem;
-      font-weight: 600;
-      color: var(--text-main);
-      margin-bottom: 8px;
+    .filter-btn-group {
       display: flex;
-      justify-content: space-between;
-      align-items: center;
+      gap: 4px;
     }
 
-    .control-subtext {
-      font-size: 0.78rem;
+    .chart-btn {
+      background: #071228;
+      border: 1px solid var(--border-card);
       color: var(--text-muted);
+      font-size: 0.68rem;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .chart-btn.active, .chart-btn:hover {
+      background: var(--blue);
+      color: #FFFFFF;
+      border-color: var(--blue);
+    }
+
+    .chart-container-box {
+      position: relative;
+      height: 150px;
+      width: 100%;
+      flex: 1;
+    }
+
+    /* ==========================================================================
+       ROW 2 - CARD 1: SYSTEM STATISTICS
+       ========================================================================== */
+    .stats-4grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .stat-box {
+      background: #071228;
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      padding: 8px 10px;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stat-box-title {
+      font-size: 0.68rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .stat-box-val {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1.08rem;
+      font-weight: 800;
+      margin-top: 3px;
+    }
+
+    .sparkline-svg {
+      width: 100%;
+      height: 18px;
+      margin-top: 4px;
+    }
+
+    .stats-bottom-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    .mini-stat-card {
+      background: #071228;
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      padding: 8px 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .mini-stat-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      background: rgba(22, 139, 255, 0.12);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--blue);
+      flex-shrink: 0;
+    }
+
+    .mini-stat-text span {
+      display: block;
+      font-size: 0.65rem;
+      color: var(--text-muted);
+    }
+
+    .mini-stat-text strong {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.82rem;
+      color: #FFFFFF;
+    }
+
+    /* ==========================================================================
+       ROW 2 - CARD 2: DEVICE STATUS
+       ========================================================================== */
+    .device-table {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      font-size: 0.78rem;
       margin-bottom: 12px;
     }
 
-    /* Threshold Stepper & Slider */
-    .stepper-row {
+    .device-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 3px 0;
+      border-bottom: 1px solid rgba(23, 61, 104, 0.3);
+    }
+
+    .device-row-label {
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .device-row-label svg {
+      width: 14px;
+      height: 14px;
+      color: var(--text-dim);
+    }
+
+    .device-row-val {
+      font-weight: 600;
+      color: #FFFFFF;
+    }
+
+    .btn-connect-full {
+      width: 100%;
+      background: var(--grad-primary-btn);
+      border: none;
+      color: #FFFFFF;
+      font-size: 0.82rem;
+      font-weight: 700;
+      padding: 9px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 4px 14px rgba(22, 139, 255, 0.35);
+      transition: all 0.2s;
+    }
+
+    .btn-connect-full:hover {
+      box-shadow: 0 6px 20px rgba(0, 229, 255, 0.5);
+    }
+
+    /* ==========================================================================
+       ROW 2 - CARD 3: DEMO SANDBOX
+       ========================================================================== */
+    .sandbox-subtitle {
+      font-size: 0.74rem;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+    }
+
+    .btn-start-demo {
+      width: 100%;
+      background: var(--grad-primary-btn);
+      border: none;
+      color: #FFFFFF;
+      font-size: 0.88rem;
+      font-weight: 700;
+      padding: 10px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 4px 16px rgba(0, 210, 255, 0.35);
+      margin-bottom: 8px;
+      transition: all 0.2s;
+    }
+
+    .btn-start-demo:hover {
+      box-shadow: 0 6px 22px rgba(0, 210, 255, 0.55);
+    }
+
+    .sandbox-2grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .btn-heatwave {
+      background: rgba(255, 77, 109, 0.14);
+      border: 1px solid rgba(255, 77, 109, 0.5);
+      color: #FFA2B2;
+      font-size: 0.74rem;
+      font-weight: 700;
+      padding: 8px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+
+    .btn-heatwave:hover {
+      background: rgba(255, 77, 109, 0.3);
+      color: #FFFFFF;
+    }
+
+    .btn-cooldown {
+      background: rgba(0, 229, 255, 0.12);
+      border: 1px solid rgba(0, 229, 255, 0.45);
+      color: #7BEAFF;
+      font-size: 0.74rem;
+      font-weight: 700;
+      padding: 8px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+
+    .btn-cooldown:hover {
+      background: rgba(0, 229, 255, 0.25);
+      color: #FFFFFF;
+    }
+
+    .btn-sensor-error {
+      width: 100%;
+      background: rgba(255, 176, 32, 0.12);
+      border: 1px solid rgba(255, 176, 32, 0.45);
+      color: #FFD27D;
+      font-size: 0.74rem;
+      font-weight: 700;
+      padding: 8px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      margin-bottom: 8px;
+      transition: all 0.2s;
+    }
+
+    .btn-sensor-error:hover {
+      background: rgba(255, 176, 32, 0.25);
+      color: #FFFFFF;
+    }
+
+    .btn-reset-demo {
+      width: 100%;
+      background: transparent;
+      border: 1px solid var(--border-card);
+      color: var(--text-muted);
+      font-size: 0.74rem;
+      font-weight: 600;
+      padding: 7px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+
+    .btn-reset-demo:hover {
+      border-color: var(--cyan);
+      color: #FFFFFF;
+    }
+
+    /* ==========================================================================
+       BOTTOM SECTION: ALERTS & EVENTS (HORIZONTAL CARDS)
+       ========================================================================== */
+    .alerts-events-card {
+      padding: 16px 20px;
+    }
+
+    .alerts-grid-horizontal {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 12px;
+      margin-top: 4px;
+    }
+
+    .event-tile {
+      background: #071228;
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 10px 12px;
       display: flex;
       align-items: center;
       gap: 10px;
-      margin-bottom: 12px;
+      transition: border-color 0.2s;
     }
 
-    .stepper-btn {
-      width: 38px;
-      height: 38px;
-      background: var(--bg-card-subtle);
-      border: 1px solid var(--border-color);
-      color: var(--text-main);
-      border-radius: var(--radius-sm);
-      font-size: 1.2rem;
-      font-weight: 700;
-      cursor: pointer;
+    .event-tile:hover {
+      border-color: var(--border-card);
+    }
+
+    .event-icon-circle {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: all 0.2s;
+      flex-shrink: 0;
     }
 
-    .stepper-btn:hover {
-      border-color: var(--primary-red);
-      color: var(--primary-red);
-      background: var(--red-subtle);
+    .icon-green-fan {
+      background: rgba(0, 230, 160, 0.15);
+      color: var(--green);
     }
 
-    .threshold-display-box {
-      flex: 1;
-      background: var(--bg-card-subtle);
-      border: 1px solid var(--border-color);
-      border-radius: var(--radius-sm);
-      padding: 8px 12px;
-      text-align: center;
-      font-family: var(--font-mono);
-      font-size: 1.3rem;
-      font-weight: 700;
-      color: var(--primary-red);
+    .icon-amber-temp {
+      background: rgba(255, 176, 32, 0.15);
+      color: var(--amber);
     }
 
-    .slider-custom {
-      width: 100%;
-      accent-color: var(--primary-red);
-      height: 6px;
-      background: #2B2D33;
-      border-radius: 4px;
-      cursor: pointer;
+    .icon-blue-demo {
+      background: rgba(22, 139, 255, 0.15);
+      color: var(--blue);
     }
 
-    .preset-chips {
-      display: flex;
-      gap: 6px;
-      margin-top: 10px;
+    .icon-cyan-fan {
+      background: rgba(0, 229, 255, 0.15);
+      color: var(--cyan);
     }
 
-    .preset-chip {
-      padding: 4px 10px;
-      background: var(--bg-card-subtle);
-      border: 1px solid var(--border-color);
-      border-radius: var(--radius-sm);
-      color: var(--text-muted);
-      font-size: 0.76rem;
-      cursor: pointer;
+    .icon-red-alert {
+      background: rgba(255, 77, 109, 0.15);
+      color: var(--red);
+    }
+
+    .event-info span {
+      display: block;
+      font-size: 0.74rem;
       font-weight: 600;
-      transition: all 0.2s;
+      color: #FFFFFF;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
-    .preset-chip:hover {
-      border-color: var(--primary-red);
-      color: var(--text-main);
+    .event-info time {
+      font-size: 0.65rem;
+      color: var(--text-dim);
+      font-family: 'JetBrains Mono', monospace;
     }
 
-    /* Segmented Mode Selector */
-    .segmented-control {
-      display: flex;
-      background: var(--bg-card-subtle);
-      border: 1px solid var(--border-color);
-      padding: 4px;
-      border-radius: var(--radius-sm);
-      gap: 4px;
-    }
-
-    .segmented-item {
-      flex: 1;
-      text-align: center;
-      padding: 8px;
-      font-size: 0.82rem;
-      font-weight: 600;
-      border-radius: 6px;
-      cursor: pointer;
-      color: var(--text-muted);
-      transition: all 0.2s;
-      border: 1px solid transparent;
-    }
-
-    .segmented-item.active {
-      background: var(--bg-card);
-      color: var(--primary-red);
-      border-color: var(--red-border);
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
-    }
-
-    /* Manual Toggle Button */
-    .manual-toggle-btn {
-      width: 100%;
-      margin-top: 10px;
-      padding: 12px;
-      font-size: 0.9rem;
-      font-weight: 700;
-    }
-
-    /* ==========================================================================
-       BOTTOM PANELS: SERIAL CONSOLE & SIMULATION LAB
-       ========================================================================== */
-    .bottom-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 24px;
-    }
-
-    @media (max-width: 900px) {
-      .bottom-grid {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    /* Serial Monitor Terminal Drawer */
-    .terminal-container {
-      background: #060709;
-      border: 1px solid var(--border-color);
-      border-radius: var(--radius-md);
-      padding: 12px;
-      font-family: var(--font-mono);
-      font-size: 0.8rem;
-      height: 200px;
-      overflow-y: auto;
-      color: #d1d5db;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-
-    .terminal-line {
-      line-height: 1.4;
-      word-break: break-all;
-    }
-
-    .terminal-in {
-      color: #60a5fa;
-    }
-
-    .terminal-out {
-      color: #34d399;
-    }
-
-    .terminal-warn {
-      color: #f59e0b;
-    }
-
-    .terminal-err {
-      color: #f87171;
-    }
-
-    .terminal-time {
-      color: #6b7280;
-      margin-right: 6px;
-      user-select: none;
-    }
-
-    .terminal-input-bar {
-      display: flex;
-      gap: 8px;
-      margin-top: 10px;
-    }
-
-    .terminal-input {
-      flex: 1;
-      background: var(--bg-card-subtle);
-      border: 1px solid var(--border-color);
-      border-radius: var(--radius-sm);
-      color: var(--text-main);
-      padding: 8px 12px;
-      font-family: var(--font-mono);
-      font-size: 0.84rem;
-    }
-
-    .terminal-input:focus {
-      outline: none;
-      border-color: var(--primary-red);
-    }
-
-    /* Simulation Lab Card Controls */
-    .sim-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      margin-bottom: 14px;
-    }
-
-    .sim-row label {
-      font-size: 0.85rem;
-      color: var(--text-main);
-    }
-
-    /* Modal / Alert Dialog */
+    /* Modal */
     .modal-overlay {
-      display: none;
       position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0, 0, 0, 0.75);
-      backdrop-filter: blur(4px);
-      z-index: 1000;
+      inset: 0;
+      background: rgba(5, 11, 27, 0.85);
+      backdrop-filter: blur(10px);
+      display: none;
       align-items: center;
       justify-content: center;
+      z-index: 100;
       padding: 20px;
     }
 
@@ -779,462 +1202,733 @@
     }
 
     .modal-box {
-      background: var(--bg-card);
-      border: 1px solid var(--border-highlight);
+      background: #0E2040;
+      border: 1px solid var(--border-card);
       border-radius: var(--radius-lg);
-      max-width: 520px;
       width: 100%;
-      padding: 24px;
-      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8), 0 0 30px var(--red-glow);
-      animation: modalPop 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      max-width: 480px;
+      padding: 22px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8), 0 0 30px rgba(22, 139, 255, 0.2);
     }
 
-    @keyframes modalPop {
-      from { transform: scale(0.92); opacity: 0; }
-      to { transform: scale(1); opacity: 1; }
-    }
-
-    .modal-title {
-      font-size: 1.2rem;
-      font-weight: 700;
-      margin-bottom: 12px;
+    /* Toasts */
+    #toast-container {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
       display: flex;
-      align-items: center;
+      flex-direction: column;
       gap: 8px;
+      z-index: 110;
+      pointer-events: none;
     }
 
-    .modal-desc {
-      font-size: 0.88rem;
-      color: var(--text-muted);
-      line-height: 1.6;
-      margin-bottom: 20px;
-    }
-
-    /* Utility Helpers */
-    .text-red { color: var(--primary-red); }
-    .text-green { color: var(--status-normal); }
-    .text-muted { color: var(--text-muted); }
-    .font-mono { font-family: var(--font-mono); }
-
-    /* Footer */
-    footer {
-      margin-top: 40px;
-      padding-top: 20px;
-      border-top: 1px solid var(--border-color);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 12px;
+    .toast-msg {
+      background: #0E2040;
+      border: 1px solid var(--cyan);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6), 0 0 12px var(--cyan-glow);
+      color: #FFFFFF;
+      padding: 9px 15px;
+      border-radius: var(--radius-sm);
       font-size: 0.8rem;
-      color: var(--text-dim);
+      font-weight: 500;
+      pointer-events: auto;
+      animation: slideInToast 0.25s ease;
     }
 
-    /* Pulse animation for cooling active */
-    .card-pulse-red {
-      box-shadow: 0 0 30px rgba(255, 48, 59, 0.25);
-      border-color: var(--primary-red) !important;
+    @keyframes slideInToast {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+
+    /* Responsive */
+    @media (max-width: 1200px) {
+      .row-3col {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .alerts-grid-horizontal {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    @media (max-width: 900px) {
+      aside.sidebar {
+        transform: translateX(-100%);
+      }
+      aside.sidebar.mobile-open {
+        transform: translateX(0);
+      }
+      .main-wrapper {
+        margin-left: 0;
+      }
+      .mobile-menu-btn {
+        display: block;
+      }
+      .row-3col {
+        grid-template-columns: 1fr;
+      }
+      .alerts-grid-horizontal {
+        grid-template-columns: 1fr 1fr;
+      }
+      .clock-pill {
+        display: none;
+      }
     }
   </style>
 </head>
 <body>
 
-  <div class="container">
+  <!-- SVG Gradient Definitions -->
+  <svg width="0" height="0" style="position:absolute;">
+    <defs>
+      <!-- Gauge Arc Gradient: Purple -> Blue -> Cyan -> Red -->
+      <linearGradient id="gaugeGradient" x1="0%" y1="100%" x2="100%" y2="0%">
+        <stop offset="0%" stop-color="#7847FF" />
+        <stop offset="35%" stop-color="#168BFF" />
+        <stop offset="70%" stop-color="#00E5FF" />
+        <stop offset="100%" stop-color="#FF4D6D" />
+      </linearGradient>
+    </defs>
+  </svg>
+
+  <div class="app-layout">
     
-    <!-- HEADER -->
-    <header>
-      <div class="brand">
-        <div class="brand-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z"/>
-            <path d="M10 10h4"/>
-            <circle cx="12" cy="18" r="1.5" fill="currentColor"/>
-          </svg>
-        </div>
+    <!-- ========================================================================
+         SIDEBAR NAVIGATION
+         ======================================================================== -->
+    <aside class="sidebar" id="sidebar">
+      
+      <!-- Top Brand: SmartCool + Snowflake -->
+      <div class="sidebar-brand">
+        <!-- Exact Snowflake Icon -->
+        <svg class="brand-snowflake-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="12" y1="2" x2="12" y2="22"/>
+          <line x1="2" y1="12" x2="22" y2="12"/>
+          <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/>
+          <line x1="19.07" y1="4.93" x2="4.93" y2="19.07"/>
+          <circle cx="12" cy="12" r="2.5" fill="#7847FF" stroke="#00E5FF"/>
+          <!-- Branching crystal ticks -->
+          <path d="m9 4 3 3 3-3"/>
+          <path d="m9 20 3-3 3 3"/>
+          <path d="m4 9 3 3-3 3"/>
+          <path d="m20 9-3 3 3 3"/>
+        </svg>
         <div class="brand-text">
-          <h1>Smart<span>Cool</span> <small style="font-size:0.6em; color:var(--text-muted); font-weight:500;">v1.0</small></h1>
-          <p>Temperature-Driven Intelligent Automatic Cooling System</p>
+          <h1>Smart<span>Cool</span></h1>
+          <p>Industrial IoT Telemetry</p>
         </div>
       </div>
 
-      <div class="header-actions">
-        <!-- Live Connection State Badge -->
-        <div class="connection-pill" id="connectionPill">
-          <div class="status-dot" id="connectionDot"></div>
-          <span id="connectionText">Arduino Disconnected</span>
+      <!-- Navigation Links -->
+      <nav class="sidebar-nav">
+        <!-- Overview (Active by default with gradient fill) -->
+        <a href="#overview" class="nav-item active" onclick="setActiveNav(this)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          Overview
+        </a>
+
+        <a href="#monitoring" class="nav-item" onclick="setActiveNav(this)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          Live Monitoring
+        </a>
+
+        <a href="#history" class="nav-item" onclick="setActiveNav(this)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          Temperature History
+        </a>
+
+        <a href="#fan-control" class="nav-item" onclick="setActiveNav(this)">
+          <!-- Fan Propeller Icon -->
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="3"/><path d="M12 9a3 3 0 0 0-3-3H6a3 3 0 0 0 0 6h3"/><path d="M15 12a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v3"/><path d="M12 15a3 3 0 0 0 3 3h3a3 3 0 0 0 0-6h-3"/><path d="M9 12a3 3 0 0 0-3 3v3a3 3 0 0 0 6 0v-3"/></svg>
+          Fan Control
+        </a>
+
+        <a href="#device-status" class="nav-item" onclick="setActiveNav(this)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+          Device Status
+        </a>
+
+        <a href="#alerts" class="nav-item" onclick="setActiveNav(this)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          Alerts & Events
+          <span class="nav-badge-pill" id="navAlertBadge">3</span>
+        </a>
+
+        <a href="#demo-sandbox" class="nav-item" onclick="setActiveNav(this)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          Demo Sandbox
+        </a>
+
+        <a href="#settings" class="nav-item" onclick="openSettingsModal()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          Settings
+        </a>
+      </nav>
+
+      <!-- Sidebar Tagline Footer -->
+      <div class="sidebar-footer">
+        <svg class="footer-logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
+        <div class="footer-text">
+          <strong>Smarter Cooling</strong>
+          <span>for a Greener Tomorrow</span>
         </div>
-
-        <!-- Serial / Web Serial Action Button -->
-        <button class="btn btn-primary" id="btnConnectSerial" onclick="toggleSerialConnection()">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
-            <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
-          </svg>
-          <span id="btnConnectText">Connect Arduino</span>
-        </button>
-
-        <!-- Demo Mode Switcher -->
-        <button class="btn btn-demo" id="btnDemoToggle" onclick="toggleDemoMode()">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <polygon points="5 3 19 12 5 21 5 3"/>
-          </svg>
-          <span id="btnDemoText">Start Demo</span>
-        </button>
-
-        <!-- Audio Alerts Toggle -->
-        <button class="btn btn-outline btn-sm" id="btnAudioToggle" title="Toggle Synthesized Audio Chimes" onclick="toggleAudioAlerts()">
-          <svg id="audioIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
-            <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
-            <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
-          </svg>
-        </button>
       </div>
-    </header>
+    </aside>
 
-    <!-- PROMINENT DEMO MODE BANNER -->
-    <div class="demo-banner" id="demoBanner">
-      <div style="display:flex; align-items:center; gap:10px;">
-        <span class="demo-tag">DEMO MODE ACTIVE</span>
-        <span>Simulating realistic hardware telemetry. Real Arduino is not connected.</span>
-      </div>
-      <button class="btn btn-sm btn-outline" style="border-color:rgba(245,158,11,0.5); color:#FDE68A;" onclick="toggleDemoMode()">
-        Stop Demo
-      </button>
-    </div>
-
-    <!-- TOP KPI TELEMETRY CARDS -->
-    <div class="kpi-grid">
+    <!-- ========================================================================
+         MAIN WRAPPER & TOPBAR
+         ======================================================================== -->
+    <div class="main-wrapper">
       
-      <!-- Temperature Card -->
-      <div class="card card-accent-red" id="tempCard">
-        <div class="card-header-flex">
-          <span class="card-title">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z"/></svg>
-            Live Temperature
-          </span>
-          <span class="badge badge-normal" id="tempStatusBadge">NORMAL</span>
-        </div>
-        <div class="kpi-value-row">
-          <span class="kpi-value" id="valTemperature">--.-</span>
-          <span class="kpi-unit">°C</span>
-        </div>
-        <div class="kpi-subtext">
-          <span id="tempDeltaIcon">●</span>
-          <span id="tempSubtext">Awaiting telemetry from LM35...</span>
-        </div>
-      </div>
-
-      <!-- Fan Status Card -->
-      <div class="card" id="fanStatusCard">
-        <div class="card-header-flex">
-          <span class="card-title">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="m12 12 4-4"/><path d="m12 12-4-4"/><path d="m12 12-4 4"/><path d="m12 12 4 4"/></svg>
-            Cooling Fan State
-          </span>
-          <span class="badge badge-off" id="fanStateBadge">FAN OFF</span>
-        </div>
-        <div class="fan-card-content">
-          <div>
-            <div class="kpi-value-row">
-              <span class="kpi-value" id="valFanStateText" style="font-size:2.2rem;">IDLE</span>
-            </div>
-            <div class="kpi-subtext" id="fanModeSubtext">Driver: TIP122 (Pin D8)</div>
-          </div>
-          <!-- Animated Spinning Fan Blades -->
-          <div class="fan-visualizer-box" id="fanVisualizer">
-            <svg class="fan-icon-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="12" r="3"/>
-              <path d="M12 9a3 3 0 0 0-3-3H6a3 3 0 0 0 0 6h3"/>
-              <path d="M15 12a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v3"/>
-              <path d="M12 15a3 3 0 0 0 3 3h3a3 3 0 0 0 0-6h-3"/>
-              <path d="M9 12a3 3 0 0 0-3 3v3a3 3 0 0 0 6 0v-3"/>
-            </svg>
+      <!-- Topbar Header -->
+      <header class="topbar">
+        <div class="topbar-left">
+          <button class="mobile-menu-btn" onclick="toggleMobileSidebar()" aria-label="Toggle Menu">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+          </button>
+          <div class="topbar-title">
+            <h2>SmartCool Industrial IoT Dashboard</h2>
+            <p>Real-Time Thermal Telemetry &bull; Hysteresis Fan Control &bull; Web Serial API</p>
           </div>
         </div>
-      </div>
 
-      <!-- Configured Threshold Card -->
-      <div class="card">
-        <div class="card-header-flex">
-          <span class="card-title">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20"/><path d="m17 5-5-3-5 3"/><path d="m17 19-5 3-5-3"/></svg>
-            Trigger Threshold
-          </span>
-          <span class="badge badge-off" id="badgeHysteresis">±1.0°C Hysteresis</span>
-        </div>
-        <div class="kpi-value-row">
-          <span class="kpi-value" id="valThreshold">30.0</span>
-          <span class="kpi-unit">°C</span>
-        </div>
-        <div class="kpi-subtext">
-          <span>ON at ≥ <strong id="tripOnText" class="text-red">30.0°C</strong> | OFF at &lt; <strong id="tripOffText">29.0°C</strong></span>
-        </div>
-      </div>
+        <div class="topbar-right">
+          <!-- System Ready Indicator -->
+          <div class="pill pill-green">
+            <span class="pill-green-dot"></span>
+            <span id="systemStateText">System Ready</span>
+          </div>
 
-      <!-- System Health & Telemetry Status -->
-      <div class="card">
-        <div class="card-header-flex">
-          <span class="card-title">
+          <!-- Arduino Disconnected Indicator -->
+          <div class="pill pill-red" id="arduinoPill">
+            <span class="pill-red-dot" id="arduinoDot"></span>
+            <span id="arduinoPillText">Arduino Disconnected</span>
+          </div>
+
+          <!-- Clock and Date -->
+          <div class="clock-pill">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-            System Status
-          </span>
-          <span class="badge badge-normal" id="systemStateBadge">STANDBY</span>
-        </div>
-        <div class="kpi-value-row">
-          <span class="kpi-value" id="valSystemMode" style="font-size:2rem;">AUTO</span>
-        </div>
-        <div class="kpi-subtext">
-          <span>Last Telemetry: <span id="valLastTimestamp" class="font-mono">Never</span></span>
-        </div>
-      </div>
-
-    </div>
-
-    <!-- MAIN MIDDLE SECTION: CHART + CONTROL PANEL -->
-    <div class="dashboard-layout">
-      
-      <!-- Real-Time Temperature History Chart -->
-      <div class="card">
-        <div class="card-header-flex">
-          <div>
-            <h2 style="font-size:1.1rem; font-weight:700;">Live Thermal Telemetry</h2>
-            <p style="font-size:0.8rem; color:var(--text-muted);">Real-time stream with automatic threshold trip line</p>
-          </div>
-          <div style="display:flex; gap:8px;">
-            <button class="btn btn-outline btn-sm" onclick="clearChartData()">Clear History</button>
-          </div>
-        </div>
-
-        <div class="chart-container">
-          <canvas id="tempChart"></canvas>
-          <canvas id="fallbackCanvas"></canvas>
-        </div>
-
-        <div class="chart-legend">
-          <div class="legend-item">
-            <span class="legend-color" style="background:#FF303B;"></span>
-            <span>LM35 Temperature (°C)</span>
-          </div>
-          <div class="legend-item">
-            <span class="legend-color" style="background:#F59E0B; border: 1px dashed #fff;"></span>
-            <span>Threshold Trigger Line</span>
-          </div>
-          <div class="legend-item" style="margin-left:auto;">
-            <span id="chartDataPointCount" class="font-mono" style="font-size:0.75rem;">0 samples logged</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Control Panel & Configuration -->
-      <div class="card">
-        <div class="card-header-flex">
-          <div>
-            <h2 style="font-size:1.1rem; font-weight:700;">System Controls</h2>
-            <p style="font-size:0.8rem; color:var(--text-muted);">Configure thresholds & operating modes</p>
-          </div>
-          <span class="badge badge-off" id="cmdSyncBadge">SYNCED</span>
-        </div>
-
-        <!-- 1. Operating Mode Switcher -->
-        <div class="control-group">
-          <label class="control-label">
-            <span>Operating Mode</span>
-            <span id="modeStatusText" style="font-size:0.75rem; color:var(--primary-red); font-weight:700;">AUTOMATIC</span>
-          </label>
-          <div class="control-subtext">In AUTO mode, Arduino hardware evaluates temperature. MANUAL mode allows forced fan override.</div>
-          <div class="segmented-control">
-            <div class="segmented-item active" id="segModeAuto" onclick="setSystemMode('AUTO')">
-              AUTOMATIC
-            </div>
-            <div class="segmented-item" id="segModeManual" onclick="setSystemMode('MANUAL')">
-              MANUAL OVERRIDE
+            <div class="clock-text">
+              <strong id="clockTime">10:42 AM</strong>
+              <span id="clockDate">Apr 26, 2025</span>
             </div>
           </div>
 
-          <!-- Manual Fan Switch (Visible only in Manual mode) -->
-          <div id="manualFanSection" style="display:none; margin-top:12px;">
-            <button class="btn btn-outline manual-toggle-btn" id="btnManualFanToggle" onclick="toggleManualFan()">
-              Turn Fan ON
-            </button>
-            <div style="font-size:0.74rem; color:var(--text-dim); margin-top:6px; text-align:center;">
-              *Manual command is sent via serial and confirmed by Arduino before state changes.
-            </div>
-          </div>
-        </div>
+          <!-- Settings Icon Button -->
+          <button class="btn-icon" title="Settings" onclick="openSettingsModal()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          </button>
 
-        <!-- 2. Temperature Threshold Stepper -->
-        <div class="control-group">
-          <div class="control-label">
-            <span>Trigger Threshold</span>
-            <span class="font-mono text-red" id="stepperDisplayVal">30.0°C</span>
-          </div>
-          <div class="control-subtext">Set the cut-in temperature for the 12V cooling fan.</div>
-          
-          <div class="stepper-row">
-            <button class="stepper-btn" onclick="adjustThreshold(-0.5)" title="Decrease 0.5°C">-</button>
-            <div class="threshold-display-box" id="thresholdBox">30.0 °C</div>
-            <button class="stepper-btn" onclick="adjustThreshold(+0.5)" title="Increase 0.5°C">+</button>
-          </div>
+          <!-- Notifications Icon Button -->
+          <button class="btn-icon" title="Notifications" onclick="scrollToSection('alerts')">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          </button>
 
-          <input type="range" class="slider-custom" id="thresholdSlider" min="20" max="50" step="0.5" value="30.0" oninput="onThresholdSliderChange(this.value)" />
-
-          <div class="preset-chips">
-            <span style="font-size:0.72rem; color:var(--text-dim); align-self:center;">Presets:</span>
-            <button class="preset-chip" onclick="setPresetThreshold(26.0)">26°C</button>
-            <button class="preset-chip" onclick="setPresetThreshold(28.0)">28°C</button>
-            <button class="preset-chip" onclick="setPresetThreshold(30.0)">30°C</button>
-            <button class="preset-chip" onclick="setPresetThreshold(32.5)">32.5°C</button>
-            <button class="preset-chip" onclick="setPresetThreshold(35.0)">35°C</button>
-          </div>
-
-          <button class="btn btn-primary btn-sm" style="width:100%; margin-top:14px; justify-content:center;" onclick="applyThresholdCommand()">
-            Upload Threshold to Arduino
+          <!-- Gradient Connect Arduino Button -->
+          <button class="btn-gradient" id="btnConnectHeader" onclick="toggleSerialConnection()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+            <span id="btnConnectHeaderText">Connect Arduino</span>
           </button>
         </div>
+      </header>
 
-        <!-- Quick Summary Stats -->
-        <div>
-          <div class="control-label" style="font-size:0.8rem; margin-bottom:6px;">SESSION METRICS</div>
-          <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; font-size:0.82rem;">
-            <div style="background:var(--bg-card-subtle); padding:8px; border-radius:6px; border:1px solid var(--border-color);">
-              <span style="color:var(--text-muted); display:block; font-size:0.7rem;">Peak Temperature</span>
-              <strong id="statPeakTemp" class="font-mono">--.- °C</strong>
-            </div>
-            <div style="background:var(--bg-card-subtle); padding:8px; border-radius:6px; border:1px solid var(--border-color);">
-              <span style="color:var(--text-muted); display:block; font-size:0.7rem;">Lowest Temperature</span>
-              <strong id="statMinTemp" class="font-mono">--.- °C</strong>
-            </div>
+      <!-- Dashboard Main Container -->
+      <main class="dashboard-container" id="overview">
+        
+        <!-- Live Demo Active Banner -->
+        <div class="demo-banner" id="demoBanner">
+          <div style="display:flex; align-items:center; gap:10px;">
+            <strong style="color:var(--cyan); font-family:'JetBrains Mono';">● DEMO SIMULATION RUNNING</strong>
+            <span style="color:var(--text-muted);">Generating deterministic sensor telemetry. Hardware disconnected.</span>
           </div>
+          <button class="btn-reset-demo" style="width:auto; padding:4px 10px;" onclick="stopDemoMode()">Stop Demo</button>
         </div>
 
-      </div>
-
-    </div>
-
-    <!-- BOTTOM ROW: SERIAL TELEMETRY MONITOR & INTERACTIVE DEMO LAB -->
-    <div class="bottom-grid">
-      
-      <!-- Live Raw Serial Terminal Drawer -->
-      <div class="card">
-        <div class="card-header-flex">
-          <div>
-            <h3 style="font-size:0.95rem; font-weight:700; display:flex; align-items:center; gap:8px;">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
-              Serial Communication Console
-            </h3>
-            <p style="font-size:0.75rem; color:var(--text-muted);">9600 Baud | Bidirectional ASCII Packets</p>
-          </div>
-          <div style="display:flex; gap:6px;">
-            <button class="btn btn-outline btn-sm" onclick="clearTerminal()">Clear</button>
-          </div>
-        </div>
-
-        <div class="terminal-container" id="terminalLog">
-          <div class="terminal-line terminal-warn">
-            <span class="terminal-time">[SYS]</span>SmartCool Dashboard initialized. Ready to connect via Web Serial API or Start Demo.
-          </div>
-        </div>
-
-        <!-- Direct ASCII Command Input -->
-        <div class="terminal-input-bar">
-          <input type="text" class="terminal-input" id="cmdInput" placeholder="Send serial command (e.g., SET_TH:31.5 or GET_STATUS)..." onkeydown="handleCmdKeyDown(event)">
-          <button class="btn btn-outline btn-sm" onclick="sendCustomCommand()">Send</button>
-        </div>
-      </div>
-
-      <!-- Capstone Interactive Demo Lab -->
-      <div class="card">
-        <div class="card-header-flex">
-          <div>
-            <h3 style="font-size:0.95rem; font-weight:700; display:flex; align-items:center; gap:8px;">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-              Capstone Presentation Testing Sandbox
-            </h3>
-            <p style="font-size:0.75rem; color:var(--text-muted);">Simulate ambient thermal shifts without heating sensor</p>
-          </div>
-          <span class="badge badge-off" id="sandboxStateBadge">STANDBY</span>
-        </div>
-
-        <div style="display:flex; flex-direction:column; gap:12px;">
+        <!-- ====================================================================
+             FIRST ROW: 3 ALIGNED CARDS
+             Card 1: Current Temperature | Card 2: Fan Status | Card 3: Temperature Range
+             ==================================================================== -->
+        <div class="row-3col" id="monitoring">
           
-          <!-- Slider for live demo temp manipulation -->
-          <div>
-            <div style="display:flex; justify-content:space-between; font-size:0.82rem; margin-bottom:4px;">
-              <span>Simulated Ambient Heat:</span>
-              <strong class="font-mono text-red" id="simTempDisplay">28.5 °C</strong>
+          <!-- Card 1: Current Temperature -->
+          <div class="card" id="cardTemp">
+            <div class="card-header-flex">
+              <span class="card-title">
+                <svg class="title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z"/></svg>
+                Current Temperature
+              </span>
             </div>
-            <input type="range" class="slider-custom" id="simTempSlider" min="20" max="45" step="0.2" value="28.5" oninput="onSimSliderInput(this.value)">
-            <div style="display:flex; justify-content:space-between; font-size:0.7rem; color:var(--text-dim); margin-top:2px;">
-              <span>20°C (Cold)</span>
-              <span>30°C (Threshold)</span>
-              <span>45°C (Overheat)</span>
+
+            <div class="temp-card-body">
+              <!-- Radial Gradient Arc Gauge -->
+              <div class="gauge-wrapper">
+                <svg class="gauge-svg" viewBox="0 0 140 140">
+                  <!-- Background Track Arc: 270 degrees from 135 deg to 405 deg -->
+                  <circle cx="70" cy="70" r="56" fill="none" stroke="rgba(23, 61, 104, 0.45)" stroke-width="10" stroke-dasharray="264 352" stroke-dashoffset="-44" stroke-linecap="round"/>
+                  <!-- Filled Gradient Arc -->
+                  <circle id="gaugeArcFill" cx="70" cy="70" r="56" fill="none" stroke="url(#gaugeGradient)" stroke-width="10" stroke-dasharray="264 352" stroke-dashoffset="100" stroke-linecap="round" style="transition: stroke-dashoffset 0.6s ease;"/>
+                </svg>
+                <div class="gauge-center-content">
+                  <div class="gauge-temp-number" id="valTemperature">30.2<span style="font-size:1.2rem; font-weight:600; color:var(--cyan);">°C</span></div>
+                  <div class="gauge-status-badge" id="tempCategoryBadge">Normal</div>
+                </div>
+              </div>
+
+              <!-- Metadata Details -->
+              <div class="temp-details-list">
+                <div class="temp-detail-row">
+                  <span class="temp-detail-label">Previous Reading</span>
+                  <div class="temp-detail-val">
+                    <span id="valPrevTemp">29.4°C</span>
+                    <span class="delta-indicator" id="tempDeltaIndicator">▲ +0.8°C</span>
+                  </div>
+                </div>
+
+                <div class="temp-detail-row">
+                  <span class="temp-detail-label">Threshold</span>
+                  <div class="temp-detail-val">
+                    <span id="valThresholdDisplay">32.0°C</span>
+                    <button class="edit-threshold-btn" title="Edit Threshold" onclick="openSettingsModal()">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                    </button>
+                  </div>
+                </div>
+
+                <div class="temp-detail-row">
+                  <span class="temp-detail-label">Data Source</span>
+                  <div class="data-source-text">
+                    <span class="data-source-dot" id="sourceDot"></span>
+                    <span id="valDataSource">Demo Simulation</span>
+                  </div>
+                </div>
+
+                <div class="temp-detail-row" style="margin-top:2px;">
+                  <span class="temp-detail-label">Last Updated &nbsp;<strong id="valLastUpdated" style="color:var(--text-main); font-family:'JetBrains Mono'; font-size:0.75rem;">10:42:15 AM</strong></span>
+                </div>
+              </div>
             </div>
           </div>
 
-          <!-- Quick Action Buttons for Presentation -->
-          <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:4px;">
-            <button class="btn btn-outline btn-sm" onclick="triggerSimScenario('HEAT_WAVE')">
-              🔥 Simulate Heat Wave (36°C)
-            </button>
-            <button class="btn btn-outline btn-sm" onclick="triggerSimScenario('COOL_DOWN')">
-              ❄️ Simulate Cool Down (26°C)
-            </button>
-            <button class="btn btn-outline btn-sm" onclick="triggerSimScenario('SENSOR_FAULT')">
-              ⚠️ Inject Sensor Error
-            </button>
-            <button class="btn btn-outline btn-sm" onclick="triggerSimScenario('CYCLE_TEST')">
-              🔄 Auto Thermal Wave (Sine)
-            </button>
+          <!-- Card 2: Fan Status -->
+          <div class="card" id="fan-control">
+            <div class="card-header-flex">
+              <span class="card-title">
+                <svg class="title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 9a3 3 0 0 0-3-3H6a3 3 0 0 0 0 6h3"/><path d="M15 12a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v3"/><path d="M12 15a3 3 0 0 0 3 3h3a3 3 0 0 0 0-6h-3"/><path d="M9 12a3 3 0 0 0-3 3v3a3 3 0 0 0 6 0v-3"/></svg>
+                Fan Status
+              </span>
+              <!-- Green ON / Red OFF Pill -->
+              <div class="pill pill-green" id="fanStatusPill">
+                <span class="pill-green-dot" id="fanStatusDot"></span>
+                <span id="fanStatusText">ON</span>
+              </div>
+            </div>
+
+            <div class="fan-card-body">
+              <div class="fan-middle-row">
+                <!-- Circular Fan Illustration Housing -->
+                <div class="fan-housing-circle active" id="fanHousing">
+                  <svg class="fan-propeller-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="3"/>
+                    <path d="M12 9a3 3 0 0 0-3-3H6a3 3 0 0 0 0 6h3"/>
+                    <path d="M15 12a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v3"/>
+                    <path d="M12 15a3 3 0 0 0 3 3h3a3 3 0 0 0 0-6h-3"/>
+                    <path d="M9 12a3 3 0 0 0-3 3v3a3 3 0 0 0 6 0v-3"/>
+                  </svg>
+                </div>
+
+                <div class="fan-controls-right">
+                  <div>
+                    <span class="mode-label">Mode</span>
+                    <div class="mode-switcher-pill">
+                      <button class="mode-btn active" id="btnModeAuto" onclick="setSystemMode('AUTO')">Auto</button>
+                      <button class="mode-btn" id="btnModeManual" onclick="setSystemMode('MANUAL')">Manual</button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <div style="display:flex; justify-content:space-between; font-size:0.72rem; color:var(--text-muted); margin-bottom:3px;">
+                      <span>Speed</span>
+                      <strong id="fanSpeedPct" style="color:#FFFFFF; font-family:'JetBrains Mono';">70%</strong>
+                    </div>
+                    <div class="speed-slider-row">
+                      <div class="fan-speed-track">
+                        <div class="fan-speed-fill" id="fanSpeedFill"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Bottom Stat Split Box -->
+              <div class="fan-bottom-box">
+                <div class="fan-bottom-stat">
+                  <span>Auto Threshold</span>
+                  <strong id="boxAutoTh">32.0°C</strong>
+                </div>
+                <div class="fan-bottom-stat">
+                  <span>Hysteresis</span>
+                  <strong id="boxHysteresis">2.0°C</strong>
+                </div>
+              </div>
+            </div>
           </div>
 
-          <div style="font-size:0.76rem; color:var(--text-muted); background:var(--bg-card-subtle); padding:10px; border-radius:6px; border:1px solid var(--border-color);">
-            💡 <strong>College Presentation Tip:</strong> Click <em>"Start Demo"</em> and drag the heat slider past 30.0°C to demonstrate real-time automatic fan engagement and hysteresis cut-out to the evaluators!
+          <!-- Card 3: Temperature Range (Last 1 Hour) -->
+          <div class="card" id="history">
+            <div class="card-header-flex">
+              <span class="card-title">
+                <svg class="title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+                Temperature Range <span style="font-size:0.75rem; color:var(--text-muted); font-weight:400; font-family:'Plus Jakarta Sans';">(Last 1 Hour)</span>
+              </span>
+
+              <div class="filter-btn-group">
+                <button class="chart-btn active" onclick="setChartFilter('1h', this)">1H</button>
+                <button class="chart-btn" onclick="setChartFilter('15m', this)">15M</button>
+                <button class="chart-btn" onclick="setChartFilter('5m', this)">5M</button>
+                <button class="chart-btn" onclick="setChartFilter('1m', this)">1M</button>
+              </div>
+            </div>
+
+            <div class="chart-container-box">
+              <canvas id="tempChart"></canvas>
+            </div>
           </div>
 
         </div>
-      </div>
+
+        <!-- ====================================================================
+             SECOND ROW: 3 BALANCED CARDS
+             Card 4: System Statistics | Card 5: Device Status | Card 6: Demo Sandbox
+             ==================================================================== -->
+        <div class="row-3col" id="device-status">
+          
+          <!-- Card 4: System Statistics -->
+          <div class="card">
+            <div class="card-header-flex">
+              <span class="card-title">
+                <svg class="title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+                System Statistics
+              </span>
+            </div>
+
+            <!-- Top 4 Tiles with Wavy Lines -->
+            <div class="stats-4grid">
+              <!-- Current -->
+              <div class="stat-box">
+                <span class="stat-box-title">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#00E5FF" stroke-width="2.2"><path d="M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z"/></svg>
+                  Current
+                </span>
+                <span class="stat-box-val" id="statCurTemp" style="color:#00E5FF;">30.2°C</span>
+                <!-- Cyan Wavy Line SVG -->
+                <svg class="sparkline-svg" viewBox="0 0 60 16" fill="none">
+                  <path d="M0 8 Q 15 15, 30 8 T 60 8" stroke="#00E5FF" stroke-width="2"/>
+                </svg>
+              </div>
+
+              <!-- Highest -->
+              <div class="stat-box">
+                <span class="stat-box-title">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#FF4D6D" stroke-width="2.2"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+                  Highest
+                </span>
+                <span class="stat-box-val" id="statPeakTemp" style="color:#FF4D6D;">35.6°C</span>
+                <!-- Red Wavy Line SVG -->
+                <svg class="sparkline-svg" viewBox="0 0 60 16" fill="none">
+                  <path d="M0 8 Q 15 2, 30 8 T 60 8" stroke="#FF4D6D" stroke-width="2"/>
+                </svg>
+              </div>
+
+              <!-- Lowest -->
+              <div class="stat-box">
+                <span class="stat-box-title">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#38BDF8" stroke-width="2.2"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+                  Lowest
+                </span>
+                <span class="stat-box-val" id="statMinTemp" style="color:#38BDF8;">24.8°C</span>
+                <!-- Blue Wavy Line SVG -->
+                <svg class="sparkline-svg" viewBox="0 0 60 16" fill="none">
+                  <path d="M0 8 Q 15 14, 30 8 T 60 8" stroke="#38BDF8" stroke-width="2"/>
+                </svg>
+              </div>
+
+              <!-- Average -->
+              <div class="stat-box">
+                <span class="stat-box-title">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#C084FC" stroke-width="2.2"><path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3Z"/></svg>
+                  Average
+                </span>
+                <span class="stat-box-val" id="statAvgTemp" style="color:#C084FC;">29.7°C</span>
+                <!-- Purple Wavy Line SVG -->
+                <svg class="sparkline-svg" viewBox="0 0 60 16" fill="none">
+                  <path d="M0 8 Q 15 3, 30 8 T 60 8" stroke="#C084FC" stroke-width="2"/>
+                </svg>
+              </div>
+            </div>
+
+            <!-- Bottom 3 Tiles -->
+            <div class="stats-bottom-row">
+              <div class="mini-stat-card">
+                <div class="mini-stat-icon">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+                </div>
+                <div class="mini-stat-text">
+                  <span>Fan Runtime</span>
+                  <strong id="valFanRuntime">2h 15m</strong>
+                </div>
+              </div>
+
+              <div class="mini-stat-card">
+                <div class="mini-stat-icon" style="color:var(--green); background:rgba(0, 230, 160, 0.12);">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/></svg>
+                </div>
+                <div class="mini-stat-text">
+                  <span>Sensor Status</span>
+                  <strong style="color:var(--green);" id="valSensorStatus">Active</strong>
+                </div>
+              </div>
+
+              <div class="mini-stat-card">
+                <div class="mini-stat-icon" style="color:var(--amber); background:rgba(255, 176, 32, 0.12);">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                </div>
+                <div class="mini-stat-text">
+                  <span>Temperature Alerts</span>
+                  <strong style="color:var(--amber);" id="valAlertsCount">3</strong>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Card 5: Device Status -->
+          <div class="card">
+            <div class="card-header-flex">
+              <span class="card-title">
+                <svg class="title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+                Device Status
+              </span>
+              <div class="pill pill-green" style="padding:2px 8px; font-size:0.68rem;">
+                <span class="pill-green-dot"></span>
+                <span>Ready</span>
+              </div>
+            </div>
+
+            <div class="device-table">
+              <div class="device-row">
+                <span class="device-row-label">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/></svg>
+                  Arduino Connection
+                </span>
+                <span class="device-row-val" id="devConnStatus" style="color:var(--red);">● Disconnected</span>
+              </div>
+
+              <div class="device-row">
+                <span class="device-row-label">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2"/></svg>
+                  Sensor (LM35)
+                </span>
+                <span class="device-row-val" id="devSensorStatus" style="color:var(--green);">● Active</span>
+              </div>
+
+              <div class="device-row">
+                <span class="device-row-label">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z"/></svg>
+                  Latest Reading
+                </span>
+                <span class="device-row-val" id="devLatestReading" style="color:var(--cyan); font-family:'JetBrains Mono';">30.2°C</span>
+              </div>
+
+              <div class="device-row">
+                <span class="device-row-label">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/></svg>
+                  Connection Method
+                </span>
+                <span class="device-row-val" style="color:var(--text-muted);">Web Serial API</span>
+              </div>
+
+              <div class="device-row">
+                <span class="device-row-label">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                  Last Communication
+                </span>
+                <span class="device-row-val" id="devLastComm" style="font-family:'JetBrains Mono';">10:42:15 AM</span>
+              </div>
+            </div>
+
+            <!-- Blue-Purple Connect Button -->
+            <button class="btn-connect-full" onclick="toggleSerialConnection()">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+              <span id="btnConnectDeviceText">Connect Arduino</span>
+            </button>
+          </div>
+
+          <!-- Card 6: Demo Sandbox -->
+          <div class="card" id="demo-sandbox">
+            <div class="card-header-flex">
+              <span class="card-title">
+                <svg class="title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                Demo Sandbox
+              </span>
+              <div class="pill" style="border:1px solid rgba(0, 229, 255, 0.4); color:var(--cyan); padding:2px 8px; font-size:0.65rem; font-family:'JetBrains Mono';">
+                DEMO MODE
+              </div>
+            </div>
+
+            <p class="sandbox-subtitle">Simulate different temperature scenarios</p>
+
+            <!-- Main Gradient Start Demo Button -->
+            <button class="btn-start-demo" id="btnMainDemo" onclick="toggleDemoMode()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              <span id="btnMainDemoText">Start Demo</span>
+            </button>
+
+            <!-- Middle 2 Grid: Heat Wave & Cool Down -->
+            <div class="sandbox-2grid">
+              <button class="btn-heatwave" onclick="triggerScenario('HEAT_WAVE')">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
+                Heat Wave (36°C)
+              </button>
+              <button class="btn-cooldown" onclick="triggerScenario('COOL_DOWN')">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="2" x2="12" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/><line x1="19.07" y1="4.93" x2="4.93" y2="19.07"/></svg>
+                Cool Down (26°C)
+              </button>
+            </div>
+
+            <!-- Full-width Sensor Error Button -->
+            <button class="btn-sensor-error" onclick="triggerScenario('SENSOR_FAULT')">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+              Sensor Error
+            </button>
+
+            <!-- Reset Demo Button -->
+            <button class="btn-reset-demo" onclick="resetDemo()">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+              Reset Demo
+            </button>
+          </div>
+
+        </div>
+
+        <!-- ====================================================================
+             BOTTOM SECTION: ALERTS & EVENTS (HORIZONTAL CARDS LIKE REFERENCE)
+             ==================================================================== -->
+        <div class="card alerts-events-card" id="alerts">
+          <div class="card-header-flex">
+            <span class="card-title">
+              <svg class="title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+              Alerts & Events
+            </span>
+            <a href="javascript:void(0)" onclick="clearEventLog()" style="font-size:0.75rem; color:var(--text-muted); text-decoration:none; display:flex; align-items:center; gap:4px;">
+              View All &rarr;
+            </a>
+          </div>
+
+          <div class="alerts-grid-horizontal" id="alertsListRow">
+            <!-- Event 1: Fan Turned ON -->
+            <div class="event-tile">
+              <div class="event-icon-circle icon-green-fan">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 9a3 3 0 0 0-3-3H6a3 3 0 0 0 0 6h3"/><path d="M15 12a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v3"/></svg>
+              </div>
+              <div class="event-info">
+                <span>Fan turned ON</span>
+                <time>10:28 AM</time>
+              </div>
+            </div>
+
+            <!-- Event 2: Temp Above Threshold -->
+            <div class="event-tile">
+              <div class="event-icon-circle icon-amber-temp">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z"/></svg>
+              </div>
+              <div class="event-info">
+                <span>Temperature above threshold</span>
+                <time>10:24 AM</time>
+              </div>
+            </div>
+
+            <!-- Event 3: Demo Mode Started -->
+            <div class="event-tile">
+              <div class="event-icon-circle icon-blue-demo">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              </div>
+              <div class="event-info">
+                <span>Demo mode started</span>
+                <time>10:15 AM</time>
+              </div>
+            </div>
+
+            <!-- Event 4: Fan Turned OFF -->
+            <div class="event-tile">
+              <div class="event-icon-circle icon-cyan-fan">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 15a3 3 0 0 0 3 3h3a3 3 0 0 0 0-6h-3"/><path d="M9 12a3 3 0 0 0-3 3v3a3 3 0 0 0 6 0v-3"/></svg>
+              </div>
+              <div class="event-info">
+                <span>Fan turned OFF</span>
+                <time>09:52 AM</time>
+              </div>
+            </div>
+
+            <!-- Event 5: Sensor Error -->
+            <div class="event-tile">
+              <div class="event-icon-circle icon-red-alert">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/></svg>
+              </div>
+              <div class="event-info">
+                <span>Sensor error detected</span>
+                <time>09:34 AM</time>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </main>
 
     </div>
-
-    <!-- FOOTER -->
-    <footer>
-      <div>
-        SmartCool IoT Temperature Controller &bull; Designed for Arduino Uno &bull; TIP122 Driver
-      </div>
-      <div>
-        Web Serial API &bull; 9600 Baud &bull; Hysteresis Thermal Protection
-      </div>
-    </footer>
-
   </div>
 
-  <!-- BROWSER COMPATIBILITY / HELP MODAL -->
-  <div class="modal-overlay" id="helpModal">
+  <!-- ========================================================================
+       MODAL: SETTINGS & THRESHOLDS
+       ======================================================================== -->
+  <div class="modal-overlay" id="settingsModal">
     <div class="modal-box">
-      <div class="modal-title">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FF303B" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-        <span id="modalHeader">Web Serial Connection Guide</span>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+        <h3 style="font-family:'Outfit'; font-size:1.15rem; color:#FFFFFF;">Threshold & System Settings</h3>
+        <button onclick="closeSettingsModal()" style="background:none; border:none; color:var(--text-muted); font-size:1.3rem; cursor:pointer;">&times;</button>
       </div>
-      <div class="modal-desc" id="modalBody">
-        To connect this dashboard directly to your Arduino Uno:
-        <ul style="margin: 10px 0 10px 20px; font-size: 0.85rem; color: #d1d5db;">
-          <li>Use <strong>Google Chrome, Microsoft Edge, or Opera</strong> (desktop versions support Web Serial).</li>
-          <li>Make sure the Arduino IDE <strong>Serial Monitor is CLOSED</strong> before clicking Connect, as only one application can access the COM port at a time.</li>
-          <li>Ensure the Arduino Uno is plugged in via USB and running <code>SmartCool_Arduino.ino</code>.</li>
-        </ul>
-      </div>
-      <div style="display:flex; justify-content:flex-end; gap:10px;">
-        <button class="btn btn-primary" onclick="closeModal()">Got it</button>
+
+      <div style="display:flex; flex-direction:column; gap:14px; font-size:0.82rem;">
+        <div>
+          <label style="display:block; color:var(--text-muted); margin-bottom:5px;">Fan Activation Threshold (°C)</label>
+          <div style="display:flex; align-items:center; gap:10px;">
+            <input type="number" id="inputThreshold" value="32.0" step="0.5" style="background:#071228; border:1px solid var(--border-card); color:#FFFFFF; padding:8px 12px; border-radius:6px; font-family:'JetBrains Mono'; width:100px;">
+            <span style="color:var(--text-muted);">Cut-off via hysteresis at <strong id="modalCutOffText" style="color:var(--green);">30.0°C</strong></span>
+          </div>
+        </div>
+
+        <div>
+          <label style="display:block; color:var(--text-muted); margin-bottom:5px;">Temperature Unit</label>
+          <div style="display:flex; gap:8px;">
+            <button class="mode-btn active" id="btnUnitC" onclick="setTempUnit('C')">Celsius (°C)</button>
+            <button class="mode-btn" id="btnUnitF" onclick="setTempUnit('F')">Fahrenheit (°F)</button>
+          </div>
+        </div>
+
+        <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:14px;">
+          <button class="btn-reset-demo" style="width:auto; padding:6px 14px;" onclick="closeSettingsModal()">Cancel</button>
+          <button class="btn-gradient" style="padding:6px 18px;" onclick="saveThresholdSetting()">Save Settings</button>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- ==========================================================================
-       DASHBOARD SCRIPT LOGIC
-       ========================================================================== -->
+  <!-- Toast Notification Container -->
+  <div id="toast-container"></div>
+
+  <!-- ========================================================================
+       APPLICATION SCRIPT & SERIAL ENGINE
+       ======================================================================== -->
   <script>
-    /* Global Application State */
+    /* Application State */
     const appState = {
       connected: false,
       isDemo: false,
@@ -1243,168 +1937,103 @@
       serialWriter: null,
       readableStreamClosed: null,
       writableStreamClosed: null,
-      
-      // Hardware Telemetry
-      temperature: null,
-      fanState: false,        // false = OFF, true = ON
-      threshold: 30.0,
-      mode: 'AUTO',           // 'AUTO' or 'MANUAL'
-      status: 'NORMAL',       // 'NORMAL', 'COOLING', 'ERROR'
-      lastTelemetryTime: null,
-      
-      // Manual Control State
-      manualFanRequested: false,
-      pendingThreshold: 30.0,
-      
-      // Statistics
-      peakTemp: -Infinity,
-      minTemp: Infinity,
-      totalSamples: 0,
-      
-      // Audio chimes
-      audioEnabled: true,
-      audioCtx: null,
 
-      // Demo Simulator Timer
+      temperature: 30.2,
+      prevTemperature: 29.4,
+      fanState: true,
+      threshold: 32.0,
+      hysteresis: 2.0,
+      mode: 'AUTO',
+      unit: 'C',
+
+      peakTemp: 35.6,
+      minTemp: 24.8,
+      tempSum: 89.1,
+      totalSamples: 3,
+      alertsCount: 3,
+      fanRunSeconds: 8100, // 2h 15m
+
       demoInterval: null,
-      demoAutoSine: false,
-      simulatedTemp: 28.5,
-      simulatedFan: false,
-      simSineStep: 0,
-      simErrorInjected: false
+      simErrorInjected: false,
+      chartFilter: '1h'
     };
 
-    /* Chart Data Buffers */
-    const MAX_CHART_POINTS = 30;
-    const chartLabels = [];
-    const chartTempData = [];
-    const chartThresholdData = [];
+    /* Chart Buffers */
+    const chartLabels = ['9:42', '9:52', '10:02', '10:12', '10:22', '10:32', '10:42'];
+    const chartDataPoints = [26.8, 28.5, 30.6, 29.2, 31.0, 31.8, 30.2];
+    const thresholdPoints = [32.0, 32.0, 32.0, 32.0, 32.0, 32.0, 32.0];
     let myChart = null;
 
-    // ==========================================
-    // INITIALIZATION & SOUND FX
-    // ==========================================
     window.addEventListener('DOMContentLoaded', () => {
       initChart();
-      updateThresholdUI(appState.threshold);
-      appendTerminal('SmartCool Web Serial Ready. Protocol: TEMP:xx.x,FAN:x,TH:xx.x,MODE:x', 'terminal-warn');
-      
-      // Check Web Serial support
-      if (!('serial' in navigator)) {
-        appendTerminal('NOTICE: Web Serial API is not supported in this browser. Please use Chrome or Edge for live Arduino communication, or click "Start Demo" for simulated mode.', 'terminal-warn');
-      }
+      updateGauge(appState.temperature);
+      updateClock();
+      setInterval(updateClock, 1000);
+
+      // Fan runtime incrementer
+      setInterval(() => {
+        if (appState.fanState) {
+          appState.fanRunSeconds++;
+          const hrs = Math.floor(appState.fanRunSeconds / 3600);
+          const mins = Math.floor((appState.fanRunSeconds % 3600) / 60);
+          document.getElementById('valFanRuntime').innerText = `${hrs}h ${mins}m`;
+        }
+      }, 1000);
     });
 
-    function getAudioContext() {
-      if (!appState.audioCtx) {
-        const AudioContext = window.AudioContext || window.webkitAudioContext;
-        if (AudioContext) {
-          appState.audioCtx = new AudioContext();
-        }
-      }
-      if (appState.audioCtx && appState.audioCtx.state === 'suspended') {
-        appState.audioCtx.resume();
-      }
-      return appState.audioCtx;
+    // Real-Time Clock
+    function updateClock() {
+      const now = new Date();
+      const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      const dateStr = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+      const secStr = now.toLocaleTimeString([], { hour12: true });
+
+      const clockTimeEl = document.getElementById('clockTime');
+      const clockDateEl = document.getElementById('clockDate');
+      const lastUpdatedEl = document.getElementById('valLastUpdated');
+      const devLastCommEl = document.getElementById('devLastComm');
+
+      if (clockTimeEl) clockTimeEl.innerText = timeStr;
+      if (clockDateEl) clockDateEl.innerText = dateStr;
+      if (lastUpdatedEl) lastUpdatedEl.innerText = secStr;
+      if (devLastCommEl) devLastCommEl.innerText = secStr;
     }
 
-    function playFuturisticChime(type) {
-      if (!appState.audioEnabled) return;
-      try {
-        const ctx = getAudioContext();
-        if (!ctx) return;
-        
-        const now = ctx.currentTime;
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-
-        if (type === 'FAN_ON') {
-          // Ascending two-tone futuristic alert
-          osc.type = 'sine';
-          osc.frequency.setValueAtTime(440, now);
-          osc.frequency.exponentialRampToValueAtTime(880, now + 0.15);
-          gain.gain.setValueAtTime(0.08, now);
-          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
-          osc.start(now);
-          osc.stop(now + 0.25);
-        } else if (type === 'FAN_OFF') {
-          // Descending mellow tone
-          osc.type = 'sine';
-          osc.frequency.setValueAtTime(660, now);
-          osc.frequency.exponentialRampToValueAtTime(330, now + 0.2);
-          gain.gain.setValueAtTime(0.06, now);
-          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
-          osc.start(now);
-          osc.stop(now + 0.25);
-        } else if (type === 'ALERT') {
-          // Rapid warning pip
-          osc.type = 'triangle';
-          osc.frequency.setValueAtTime(900, now);
-          osc.frequency.setValueAtTime(1100, now + 0.08);
-          gain.gain.setValueAtTime(0.12, now);
-          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
-          osc.start(now);
-          osc.stop(now + 0.2);
-        }
-      } catch (e) {
-        // Audio synthesis fallback silently ignored
-      }
-    }
-
-    function toggleAudioAlerts() {
-      appState.audioEnabled = !appState.audioEnabled;
-      const btn = document.getElementById('btnAudioToggle');
-      if (appState.audioEnabled) {
-        btn.classList.remove('btn-danger');
-        btn.classList.add('btn-outline');
-        btn.title = "Audio Alerts ON";
-        playFuturisticChime('FAN_ON');
-      } else {
-        btn.classList.remove('btn-outline');
-        btn.classList.add('btn-danger');
-        btn.title = "Audio Alerts MUTED";
-      }
-    }
-
-    // ==========================================
-    // CHART INITIALIZATION & UPDATES
-    // ==========================================
+    // Chart.js Setup matching exact reference styling
     function initChart() {
       const ctx = document.getElementById('tempChart');
-      if (!ctx || typeof Chart === 'undefined') {
-        initFallbackCanvas();
-        return;
-      }
+      if (!ctx || typeof Chart === 'undefined') return;
 
-      const gradient = ctx.getContext('2d').createLinearGradient(0, 0, 0, 300);
-      gradient.addColorStop(0, 'rgba(255, 48, 59, 0.45)');
-      gradient.addColorStop(1, 'rgba(255, 48, 59, 0.0)');
+      const gradient = ctx.getContext('2d').createLinearGradient(0, 0, 0, 150);
+      gradient.addColorStop(0, 'rgba(0, 229, 255, 0.28)');
+      gradient.addColorStop(1, 'rgba(22, 139, 255, 0.0)');
 
       myChart = new Chart(ctx, {
         type: 'line',
         data: {
-          labels: chartLabels,
+          labels: [...chartLabels],
           datasets: [
             {
-              label: 'LM35 Temperature (°C)',
-              data: chartTempData,
-              borderColor: '#FF303B',
+              label: 'Ambient Temp',
+              data: [...chartDataPoints],
+              borderColor: '#00E5FF',
               backgroundColor: gradient,
-              borderWidth: 2.5,
+              borderWidth: 2.2,
               tension: 0.35,
               fill: true,
-              pointRadius: 3,
+              pointRadius: 4,
+              pointBackgroundColor: '#071228',
+              pointBorderColor: '#00E5FF',
+              pointBorderWidth: 2,
               pointHoverRadius: 6,
-              pointBackgroundColor: '#FF303B'
+              pointHoverBackgroundColor: '#00E5FF'
             },
             {
-              label: 'Threshold (°C)',
-              data: chartThresholdData,
-              borderColor: '#F59E0B',
-              borderWidth: 2,
-              borderDash: [6, 4],
+              label: 'Threshold (32°C)',
+              data: [...thresholdPoints],
+              borderColor: '#FF4D6D',
+              borderWidth: 1.6,
+              borderDash: [5, 4],
               pointRadius: 0,
               fill: false
             }
@@ -1413,37 +2042,37 @@
         options: {
           responsive: true,
           maintainAspectRatio: false,
-          animation: { duration: 300 },
-          scales: {
-            x: {
-              grid: { color: 'rgba(255, 255, 255, 0.05)' },
-              ticks: { color: '#71717A', font: { family: 'JetBrains Mono', size: 10 } }
-            },
-            y: {
-              min: 15,
-              max: 50,
-              grid: { color: 'rgba(255, 255, 255, 0.06)' },
-              ticks: { 
-                color: '#A1A1AA', 
-                font: { family: 'JetBrains Mono', size: 11 },
-                callback: function(val) { return val + '°C'; }
-              }
-            }
-          },
           plugins: {
             legend: { display: false },
             tooltip: {
-              backgroundColor: '#14161B',
-              borderColor: '#2B2D33',
+              backgroundColor: '#071228',
+              borderColor: '#00E5FF',
               borderWidth: 1,
-              titleColor: '#F5F5F5',
-              bodyColor: '#A1A1AA',
-              titleFont: { family: 'Outfit', weight: '700' },
-              bodyFont: { family: 'JetBrains Mono' },
+              titleColor: '#91A7C7',
+              bodyColor: '#FFFFFF',
+              titleFont: { size: 10, family: 'Plus Jakarta Sans' },
+              bodyFont: { size: 12, weight: 'bold', family: 'JetBrains Mono' },
               callbacks: {
-                label: function(context) {
-                  return ` ${context.dataset.label}: ${context.parsed.y.toFixed(1)}°C`;
+                label: function(c) {
+                  return ` ${c.parsed.y.toFixed(1)}°C`;
                 }
+              }
+            }
+          },
+          scales: {
+            x: {
+              grid: { color: 'rgba(23, 61, 104, 0.25)' },
+              ticks: { color: '#5C769D', font: { family: 'JetBrains Mono', size: 9 } }
+            },
+            y: {
+              min: 20,
+              max: 40,
+              stepSize: 5,
+              grid: { color: 'rgba(23, 61, 104, 0.3)' },
+              ticks: {
+                color: '#91A7C7',
+                font: { family: 'JetBrains Mono', size: 9 },
+                callback: function(v) { return v + '°C'; }
               }
             }
           }
@@ -1451,315 +2080,312 @@
       });
     }
 
-    function initFallbackCanvas() {
-      const fb = document.getElementById('fallbackCanvas');
-      if (fb) fb.style.display = 'block';
-    }
+    // Radial Gauge Arc calculation
+    function updateGauge(temp) {
+      const arc = document.getElementById('gaugeArcFill');
+      if (!arc) return;
+      // Arc circumference = 2 * pi * 56 = 352px
+      // 270 degree span = 264px max stroke
+      // Scale range 15°C to 45°C
+      const clamped = Math.max(15, Math.min(45, temp));
+      const pct = (clamped - 15) / (45 - 15);
+      const strokeVal = pct * 264;
+      const offset = 264 - strokeVal;
+      arc.style.strokeDashoffset = offset;
 
-    function updateChart(tempVal, thresholdVal) {
-      const now = new Date();
-      const timeStr = now.toTimeString().split(' ')[0];
-
-      chartLabels.push(timeStr);
-      chartTempData.push(tempVal);
-      chartThresholdData.push(thresholdVal);
-
-      if (chartLabels.length > MAX_CHART_POINTS) {
-        chartLabels.shift();
-        chartTempData.shift();
-        chartThresholdData.shift();
+      // Update text
+      document.getElementById('valTemperature').innerHTML = `${temp.toFixed(1)}<span style="font-size:1.2rem; font-weight:600; color:var(--cyan);">${appState.unit === 'F' ? '°F' : '°C'}</span>`;
+      
+      const badge = document.getElementById('tempCategoryBadge');
+      if (temp < 25) {
+        badge.innerText = 'Cool';
+        badge.style.color = '#00E5FF';
+        badge.style.borderColor = 'rgba(0, 229, 255, 0.4)';
+      } else if (temp < 32) {
+        badge.innerText = 'Normal';
+        badge.style.color = '#00E6A0';
+        badge.style.borderColor = 'rgba(0, 230, 160, 0.4)';
+      } else if (temp < 38) {
+        badge.innerText = 'Warm';
+        badge.style.color = '#FFB020';
+        badge.style.borderColor = 'rgba(255, 176, 32, 0.4)';
+      } else {
+        badge.innerText = 'High Temp';
+        badge.style.color = '#FF4D6D';
+        badge.style.borderColor = 'rgba(255, 77, 109, 0.4)';
       }
-
-      if (myChart) {
-        myChart.update('none'); // Update smoothly without lag
-      }
-
-      document.getElementById('chartDataPointCount').innerText = `${chartTempData.length} samples logged`;
-    }
-
-    function clearChartData() {
-      chartLabels.length = 0;
-      chartTempData.length = 0;
-      chartThresholdData.length = 0;
-      if (myChart) myChart.update();
-      document.getElementById('chartDataPointCount').innerText = '0 samples logged';
     }
 
     // ==========================================
-    // PARSE INCOMING ARDUINO SERIAL PACKETS
-    // Format: TEMP:28.5,FAN:0,TH:30.0,MODE:AUTO,STAT:NORMAL
+    // SERIAL & TELEMETRY PARSER
+    // Protocol: TEMP:xx.x,FAN:x,TH:xx.x,MODE:x,STAT:x
     // ==========================================
-    function handleIncomingSerialLine(line) {
+    function parseTelemetryLine(line) {
       line = line.trim();
       if (!line) return;
 
-      appendTerminal(line, 'terminal-in');
-
-      // Check if it's an acknowledgment message
-      if (line.startsWith('ACK:')) {
-        handleAckMessage(line);
-        return;
-      }
-      if (line.startsWith('ERR:') || line.startsWith('WARN:')) {
-        return;
-      }
-
-      // Check for telemetry line containing TEMP:
       if (line.includes('TEMP:') && line.includes('FAN:')) {
-        parseTelemetryPacket(line);
-      }
-    }
+        const tokens = line.split(',');
+        const data = {};
+        for (const t of tokens) {
+          const [k, v] = t.split(':');
+          if (k && v !== undefined) data[k.trim()] = v.trim();
+        }
 
-    function handleAckMessage(ackLine) {
-      const badge = document.getElementById('cmdSyncBadge');
-      badge.innerText = 'ACKNOWLEDGED';
-      badge.className = 'badge badge-normal';
-      setTimeout(() => {
-        badge.innerText = 'SYNCED';
-        badge.className = 'badge badge-off';
-      }, 2000);
+        if (data.TEMP === 'ERR') {
+          renderSensorError();
+          return;
+        }
 
-      if (ackLine.includes('TH:')) {
-        const parts = ackLine.split('TH:');
-        if (parts[1]) {
-          const newTh = parseFloat(parts[1]);
-          if (!isNaN(newTh)) {
-            appState.threshold = newTh;
-            updateThresholdUI(newTh);
+        const temp = parseFloat(data.TEMP);
+        if (!isNaN(temp)) {
+          appState.prevTemperature = appState.temperature;
+          appState.temperature = temp;
+
+          // Stats
+          appState.totalSamples++;
+          appState.tempSum += temp;
+          if (temp > appState.peakTemp) appState.peakTemp = temp;
+          if (temp < appState.minTemp) appState.minTemp = temp;
+          const avg = appState.tempSum / appState.totalSamples;
+
+          document.getElementById('statCurTemp').innerText = `${temp.toFixed(1)}°C`;
+          document.getElementById('statPeakTemp').innerText = `${appState.peakTemp.toFixed(1)}°C`;
+          document.getElementById('statMinTemp').innerText = `${appState.minTemp.toFixed(1)}°C`;
+          document.getElementById('statAvgTemp').innerText = `${avg.toFixed(1)}°C`;
+          document.getElementById('devLatestReading').innerText = `${temp.toFixed(1)}°C`;
+
+          // Delta
+          const delta = temp - appState.prevTemperature;
+          const deltaEl = document.getElementById('tempDeltaIndicator');
+          if (delta > 0.05) {
+            deltaEl.innerHTML = `▲ +${delta.toFixed(1)}°C`;
+            deltaEl.style.color = '#FF4D6D';
+          } else if (delta < -0.05) {
+            deltaEl.innerHTML = `▼ ${delta.toFixed(1)}°C`;
+            deltaEl.style.color = '#38BDF8';
+          } else {
+            deltaEl.innerHTML = `● 0.0°C`;
+            deltaEl.style.color = 'var(--text-muted)';
           }
         }
+
+        // Fan State
+        const fanIsOn = (data.FAN === '1');
+        setFanUI(fanIsOn);
+
+        // Threshold
+        if (data.TH) {
+          const th = parseFloat(data.TH);
+          if (!isNaN(th)) {
+            appState.threshold = th;
+            document.getElementById('valThresholdDisplay').innerText = `${th.toFixed(1)}°C`;
+            document.getElementById('boxAutoTh').innerText = `${th.toFixed(1)}°C`;
+          }
+        }
+
+        updateGauge(appState.temperature);
+        pushChartPoint(appState.temperature);
       }
     }
 
-    function parseTelemetryPacket(packet) {
-      // Split by comma
-      const tokens = packet.split(',');
-      const data = {};
+    function setFanUI(isOn) {
+      appState.fanState = isOn;
+      const pill = document.getElementById('fanStatusPill');
+      const dot = document.getElementById('fanStatusDot');
+      const text = document.getElementById('fanStatusText');
+      const housing = document.getElementById('fanHousing');
+      const speedPct = document.getElementById('fanSpeedPct');
+      const speedFill = document.getElementById('fanSpeedFill');
 
-      for (const token of tokens) {
-        const [k, v] = token.split(':');
-        if (k && v !== undefined) {
-          data[k.trim()] = v.trim();
-        }
+      if (isOn) {
+        pill.className = 'pill pill-green';
+        dot.className = 'pill-green-dot';
+        text.innerText = 'ON';
+        housing.classList.add('active');
+        speedPct.innerText = '70%';
+        speedFill.style.width = '70%';
+      } else {
+        pill.className = 'pill pill-red';
+        dot.className = 'pill-red-dot';
+        text.innerText = 'OFF';
+        housing.classList.remove('active');
+        speedPct.innerText = '0%';
+        speedFill.style.width = '0%';
+      }
+    }
+
+    function pushChartPoint(temp) {
+      if (!myChart) return;
+      const now = new Date();
+      const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+      chartLabels.push(timeStr);
+      chartDataPoints.push(temp);
+      thresholdPoints.push(appState.threshold);
+
+      if (chartLabels.length > 15) {
+        chartLabels.shift();
+        chartDataPoints.shift();
+        thresholdPoints.shift();
       }
 
-      // 1. Process Temperature
-      if (data.TEMP === 'ERR') {
-        appState.status = 'ERROR';
-        renderSensorError();
+      myChart.data.labels = [...chartLabels];
+      myChart.data.datasets[0].data = [...chartDataPoints];
+      myChart.data.datasets[1].data = [...thresholdPoints];
+      myChart.update('none');
+    }
+
+    // ==========================================
+    // DEMO ENGINE
+    // ==========================================
+    function toggleDemoMode() {
+      if (appState.isDemo) {
+        stopDemoMode();
+      } else {
+        startDemoMode();
+      }
+    }
+
+    function startDemoMode() {
+      if (appState.connected) disconnectSerial();
+
+      appState.isDemo = true;
+      document.getElementById('demoBanner').classList.add('active');
+      document.getElementById('btnMainDemoText').innerText = 'Stop Demo';
+      document.getElementById('valDataSource').innerText = 'Demo Simulation';
+      document.getElementById('sourceDot').style.background = '#00E5FF';
+
+      pushAlertEvent('icon-blue-demo', 'Demo mode started');
+      showToast('Demo Mode Active');
+
+      if (appState.demoInterval) clearInterval(appState.demoInterval);
+      appState.demoInterval = setInterval(runDemoTick, 1200);
+      runDemoTick();
+    }
+
+    function stopDemoMode() {
+      appState.isDemo = false;
+      if (appState.demoInterval) {
+        clearInterval(appState.demoInterval);
+        appState.demoInterval = null;
+      }
+      document.getElementById('demoBanner').classList.remove('active');
+      document.getElementById('btnMainDemoText').innerText = 'Start Demo';
+      showToast('Demo Mode Stopped');
+    }
+
+    function resetDemo() {
+      appState.simErrorInjected = false;
+      appState.temperature = 30.2;
+      setFanUI(true);
+      updateGauge(30.2);
+      pushAlertEvent('icon-cyan-fan', 'Demo simulation reset (30.2°C)');
+      showToast('Demo Reset to 30.2°C');
+    }
+
+    function runDemoTick() {
+      if (!appState.isDemo) return;
+
+      if (appState.simErrorInjected) {
+        parseTelemetryLine('TEMP:ERR,FAN:0,TH:32.0,MODE:AUTO,STAT:ERROR');
         return;
       }
 
-      const temp = parseFloat(data.TEMP);
-      if (!isNaN(temp)) {
-        appState.temperature = temp;
-        
-        // Update stats
-        if (temp > appState.peakTemp) appState.peakTemp = temp;
-        if (temp < appState.minTemp) appState.minTemp = temp;
-        document.getElementById('statPeakTemp').innerText = `${appState.peakTemp.toFixed(1)} °C`;
-        document.getElementById('statMinTemp').innerText = `${appState.minTemp.toFixed(1)} °C`;
+      // Natural ambient fluctuation
+      const drift = (Math.random() - 0.48) * 0.2;
+      let newTemp = Math.round((appState.temperature + drift) * 10) / 10;
+
+      // Hysteresis
+      let fan = appState.fanState;
+      if (appState.mode === 'AUTO') {
+        if (!fan && newTemp >= appState.threshold) fan = true;
+        else if (fan && newTemp < (appState.threshold - appState.hysteresis)) fan = false;
       }
 
-      // 2. Process Fan State
-      const prevFan = appState.fanState;
-      appState.fanState = (data.FAN === '1');
-      if (appState.fanState !== prevFan) {
-        playFuturisticChime(appState.fanState ? 'FAN_ON' : 'FAN_OFF');
-      }
-
-      // 3. Process Threshold
-      if (data.TH) {
-        const th = parseFloat(data.TH);
-        if (!isNaN(th)) {
-          appState.threshold = th;
-          updateThresholdUI(th);
-        }
-      }
-
-      // 4. Process Mode & Status
-      if (data.MODE) appState.mode = data.MODE;
-      if (data.STAT) appState.status = data.STAT;
-
-      // Update UI components
-      renderTelemetryToUI();
-
-      // Add point to chart
-      if (appState.temperature !== null) {
-        updateChart(appState.temperature, appState.threshold);
-      }
+      parseTelemetryLine(`TEMP:${newTemp.toFixed(1)},FAN:${fan ? 1 : 0},TH:${appState.threshold.toFixed(1)},MODE:${appState.mode},STAT:NORMAL`);
     }
 
-    // ==========================================
-    // UI RENDERERS
-    // ==========================================
-    function renderTelemetryToUI() {
-      const now = new Date();
-      appState.lastTelemetryTime = now;
-      document.getElementById('valLastTimestamp').innerText = now.toTimeString().split(' ')[0];
+    function triggerScenario(type) {
+      if (!appState.isDemo) startDemoMode();
 
-      // Temperature Display
-      const valTempElem = document.getElementById('valTemperature');
-      const tempCard = document.getElementById('tempCard');
-      const tempBadge = document.getElementById('tempStatusBadge');
-      const tempSubtext = document.getElementById('tempSubtext');
-
-      if (appState.temperature !== null) {
-        valTempElem.innerText = appState.temperature.toFixed(1);
-
-        if (appState.temperature >= appState.threshold) {
-          tempBadge.innerText = 'HOT / COOLING';
-          tempBadge.className = 'badge badge-on';
-          tempCard.classList.add('card-pulse-red');
-          tempSubtext.innerHTML = `<span style="color:#FF303B;">▲ Temp exceeds ${appState.threshold.toFixed(1)}°C threshold</span>`;
-        } else if (appState.temperature >= appState.threshold - 1.0) {
-          tempBadge.innerText = 'HYSTERESIS ZONE';
-          tempBadge.className = 'badge badge-off';
-          tempCard.classList.remove('card-pulse-red');
-          tempSubtext.innerText = `Within 1.0°C hysteresis deadband`;
+      if (type === 'HEAT_WAVE') {
+        appState.simErrorInjected = false;
+        appState.temperature = 36.4;
+        setFanUI(true);
+        updateGauge(36.4);
+        pushChartPoint(36.4);
+        pushAlertEvent('icon-amber-temp', 'Heat wave simulation (36.4°C)');
+        showToast('Heat Wave: Fan Trips ON!');
+      } else if (type === 'COOL_DOWN') {
+        appState.simErrorInjected = false;
+        appState.temperature = 26.2;
+        setFanUI(false);
+        updateGauge(26.2);
+        pushChartPoint(26.2);
+        pushAlertEvent('icon-cyan-fan', 'Fan turned OFF (Cooled to 26.2°C)');
+        showToast('Cool Down: Fan Shuts OFF');
+      } else if (type === 'SENSOR_FAULT') {
+        appState.simErrorInjected = !appState.simErrorInjected;
+        if (appState.simErrorInjected) {
+          renderSensorError();
         } else {
-          tempBadge.innerText = 'NORMAL';
-          tempBadge.className = 'badge badge-normal';
-          tempCard.classList.remove('card-pulse-red');
-          tempSubtext.innerText = `Optimal ambient range`;
+          appState.temperature = 30.2;
+          updateGauge(30.2);
+          showToast('Sensor Error Cleared');
         }
-      }
-
-      // Fan State Display
-      const fanBadge = document.getElementById('fanStateBadge');
-      const fanText = document.getElementById('valFanStateText');
-      const fanVis = document.getElementById('fanVisualizer');
-
-      if (appState.fanState) {
-        fanBadge.innerText = 'FAN ACTIVE (ON)';
-        fanBadge.className = 'badge badge-on';
-        fanText.innerText = 'COOLING';
-        fanText.style.color = 'var(--primary-red)';
-        fanVis.classList.add('spinning');
-      } else {
-        fanBadge.innerText = 'FAN IDLE (OFF)';
-        fanBadge.className = 'badge badge-off';
-        fanText.innerText = 'IDLE';
-        fanText.style.color = 'var(--text-main)';
-        fanVis.classList.remove('spinning');
-      }
-
-      // Operating Mode
-      const sysModeBadge = document.getElementById('systemStateBadge');
-      const valSysMode = document.getElementById('valSystemMode');
-      valSysMode.innerText = appState.mode;
-
-      if (appState.status === 'ERROR') {
-        sysModeBadge.innerText = 'ERROR';
-        sysModeBadge.className = 'badge badge-error';
-      } else if (appState.fanState) {
-        sysModeBadge.innerText = 'COOLING ACTIVE';
-        sysModeBadge.className = 'badge badge-on';
-      } else {
-        sysModeBadge.innerText = 'NORMAL';
-        sysModeBadge.className = 'badge badge-normal';
-      }
-
-      // Sync Segmented buttons
-      const segAuto = document.getElementById('segModeAuto');
-      const segManual = document.getElementById('segModeManual');
-      const manualSection = document.getElementById('manualFanSection');
-      const modeText = document.getElementById('modeStatusText');
-
-      if (appState.mode === 'MANUAL') {
-        segAuto.classList.remove('active');
-        segManual.classList.add('active');
-        manualSection.style.display = 'block';
-        modeText.innerText = 'MANUAL OVERRIDE';
-        modeText.style.color = '#F59E0B';
-        
-        const btnManual = document.getElementById('btnManualFanToggle');
-        if (appState.fanState) {
-          btnManual.innerText = 'Turn Fan OFF';
-          btnManual.className = 'btn btn-danger manual-toggle-btn';
-        } else {
-          btnManual.innerText = 'Turn Fan ON';
-          btnManual.className = 'btn btn-primary manual-toggle-btn';
-        }
-      } else {
-        segAuto.classList.add('active');
-        segManual.classList.remove('active');
-        manualSection.style.display = 'none';
-        modeText.innerText = 'AUTOMATIC';
-        modeText.style.color = 'var(--primary-red)';
       }
     }
 
     function renderSensorError() {
-      document.getElementById('valTemperature').innerText = 'ERR';
-      document.getElementById('tempStatusBadge').innerText = 'SENSOR FAULT';
-      document.getElementById('tempStatusBadge').className = 'badge badge-error';
-      document.getElementById('systemStateBadge').innerText = 'SENSOR ERROR';
-      document.getElementById('systemStateBadge').className = 'badge badge-error';
-      document.getElementById('tempSubtext').innerText = 'LM35 reading out of range or disconnected!';
-      playFuturisticChime('ALERT');
-      appendTerminal('WARNING: LM35 Sensor report invalid ADC range. Check A0 wiring!', 'terminal-err');
+      document.getElementById('valTemperature').innerHTML = `ERR`;
+      const badge = document.getElementById('tempCategoryBadge');
+      badge.innerText = 'Fault';
+      badge.style.color = '#FF4D6D';
+      badge.style.borderColor = '#FF4D6D';
+      setFanUI(false);
+      pushAlertEvent('icon-red-alert', 'Sensor error detected');
+      showToast('SENSOR ERROR: Reading Disconnected!');
+    }
+
+    function pushAlertEvent(iconClass, desc) {
+      const container = document.getElementById('alertsListRow');
+      if (!container) return;
+      const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+      let iconSvg = '';
+      if (iconClass === 'icon-green-fan' || iconClass === 'icon-cyan-fan') {
+        iconSvg = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 9a3 3 0 0 0-3-3H6a3 3 0 0 0 0 6h3"/></svg>`;
+      } else if (iconClass === 'icon-amber-temp') {
+        iconSvg = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z"/></svg>`;
+      } else if (iconClass === 'icon-blue-demo') {
+        iconSvg = `<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>`;
+      } else {
+        iconSvg = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/></svg>`;
+      }
+
+      const tile = document.createElement('div');
+      tile.className = 'event-tile';
+      tile.innerHTML = `
+        <div class="event-icon-circle ${iconClass}">${iconSvg}</div>
+        <div class="event-info">
+          <span>${desc}</span>
+          <time>${timeStr}</time>
+        </div>
+      `;
+
+      container.insertBefore(tile, container.firstChild);
+      while (container.children.length > 5) {
+        container.removeChild(container.lastChild);
+      }
+    }
+
+    function clearEventLog() {
+      showToast('All events logged');
     }
 
     // ==========================================
-    // THRESHOLD ADJUSTMENT LOGIC
-    // ==========================================
-    function updateThresholdUI(newTh) {
-      newTh = parseFloat(newTh);
-      appState.threshold = newTh;
-      appState.pendingThreshold = newTh;
-      document.getElementById('valThreshold').innerText = newTh.toFixed(1);
-      document.getElementById('stepperDisplayVal').innerText = `${newTh.toFixed(1)}°C`;
-      document.getElementById('thresholdBox').innerText = `${newTh.toFixed(1)} °C`;
-      document.getElementById('thresholdSlider').value = newTh;
-      document.getElementById('tripOnText').innerText = `${newTh.toFixed(1)}°C`;
-      document.getElementById('tripOffText').innerText = `${(newTh - 1.0).toFixed(1)}°C`;
-    }
-
-    function adjustThreshold(delta) {
-      let cur = parseFloat(appState.pendingThreshold) + delta;
-      cur = Math.max(18, Math.min(50, cur));
-      cur = Math.round(cur * 10) / 10;
-      appState.pendingThreshold = cur;
-      updateThresholdUI(cur);
-    }
-
-    function onThresholdSliderChange(val) {
-      appState.pendingThreshold = parseFloat(val);
-      updateThresholdUI(val);
-    }
-
-    function setPresetThreshold(val) {
-      appState.pendingThreshold = val;
-      updateThresholdUI(val);
-      applyThresholdCommand();
-    }
-
-    function applyThresholdCommand() {
-      const th = appState.pendingThreshold.toFixed(1);
-      const cmd = `SET_TH:${th}`;
-      sendSerialCommand(cmd);
-      appendTerminal(`Transmitted: ${cmd}`, 'terminal-out');
-    }
-
-    // ==========================================
-    // MODE & MANUAL FAN CONTROLS
-    // ==========================================
-    function setSystemMode(mode) {
-      const cmd = `SET_MODE:${mode}`;
-      sendSerialCommand(cmd);
-      appendTerminal(`Transmitted: ${cmd}`, 'terminal-out');
-    }
-
-    function toggleManualFan() {
-      const newState = !appState.fanState;
-      const cmd = `SET_FAN:${newState ? 1 : 0}`;
-      sendSerialCommand(cmd);
-      appendTerminal(`Transmitted: ${cmd}`, 'terminal-out');
-    }
-
-    // ==========================================
-    // WEB SERIAL API CONNECTION MANAGER
+    // HARDWARE WEB SERIAL API
     // ==========================================
     async function toggleSerialConnection() {
       if (appState.connected) {
@@ -1771,51 +2397,22 @@
 
     async function connectSerial() {
       if (!('serial' in navigator)) {
-        showModal(
-          'Web Serial API Not Supported',
-          'Your current browser does not support the Web Serial API. Please open this dashboard in <strong>Google Chrome, Microsoft Edge, or Opera</strong> to connect to your real Arduino.<br><br>Alternatively, you can test all features right now by clicking the <strong>"Start Demo"</strong> button!'
-        );
+        alert('Web Serial API is supported in Google Chrome, Microsoft Edge, and Opera desktop. Click "Start Demo" to run simulation!');
         return;
       }
 
-      // If in demo mode, stop demo first
-      if (appState.isDemo) {
-        stopDemoMode();
-      }
-
       try {
-        appendTerminal('Requesting USB Serial Port from browser...', 'terminal-warn');
         appState.serialPort = await navigator.serial.requestPort();
-        
-        appendTerminal('Opening COM port at 9600 Baud...', 'terminal-warn');
         await appState.serialPort.open({ baudRate: 9600 });
 
         appState.connected = true;
-        updateConnectionStatusUI('connected');
-        appendTerminal('CONNECTED to Arduino Uno on USB Serial (9600 Baud)!', 'terminal-out');
+        updateConnectionUI(true);
+        showToast('Arduino Uno Connected (9600 Baud)!');
 
-        // Request initial status packet
-        setTimeout(() => {
-          sendSerialCommand('GET_STATUS');
-        }, 800);
-
-        // Start asynchronous serial reader loop
         readSerialStream();
-
       } catch (err) {
-        console.error('Serial connection error:', err);
-        appState.connected = false;
-        updateConnectionStatusUI('disconnected');
-        
-        let msg = err.message || err;
-        if (msg.includes('No port selected')) {
-          appendTerminal('Connection cancelled: No USB port selected.', 'terminal-warn');
-        } else if (msg.includes('Failed to open') || msg.includes('Access denied')) {
-          appendTerminal(`PORT BUSY: ${msg}. Make sure the Arduino IDE Serial Monitor is CLOSED!`, 'terminal-err');
-          showModal('COM Port In Use / Locked', 'The serial port is currently locked by another application. Please <strong>close the Arduino IDE Serial Monitor</strong> or any other terminal programs and try connecting again.');
-        } else {
-          appendTerminal(`Connection Error: ${msg}`, 'terminal-err');
-        }
+        console.error(err);
+        showToast('Connection cancelled or locked');
       }
     }
 
@@ -1825,59 +2422,28 @@
       appState.serialReader = textDecoder.readable.getReader();
 
       let partialLine = '';
-
       try {
         while (true) {
           const { value, done } = await appState.serialReader.read();
-          if (done) {
-            break;
-          }
+          if (done) break;
           if (value) {
             partialLine += value;
             const lines = partialLine.split(/\r?\n/);
-            partialLine = lines.pop(); // Keep remaining incomplete fragment
+            partialLine = lines.pop();
             for (const line of lines) {
-              handleIncomingSerialLine(line);
+              parseTelemetryLine(line);
             }
           }
         }
       } catch (err) {
-        console.error('Stream read error:', err);
-        appendTerminal(`Serial Read Terminated: ${err.message}`, 'terminal-err');
+        console.error(err);
       } finally {
-        if (appState.serialReader) {
-          appState.serialReader.releaseLock();
-        }
-      }
-    }
-
-    async function sendSerialCommand(cmd) {
-      // In Demo Mode, simulate local Arduino response
-      if (appState.isDemo) {
-        simulateArduinoCommand(cmd);
-        return;
-      }
-
-      if (!appState.connected || !appState.serialPort || !appState.serialPort.writable) {
-        appendTerminal(`Cannot send "${cmd}": Arduino is not connected.`, 'terminal-warn');
-        return;
-      }
-
-      try {
-        const textEncoder = new TextEncoderStream();
-        appState.writableStreamClosed = textEncoder.readable.pipeTo(appState.serialPort.writable);
-        const writer = textEncoder.writable.getWriter();
-        await writer.write(cmd + '\n');
-        writer.releaseLock();
-      } catch (err) {
-        console.error('Serial write error:', err);
-        appendTerminal(`Send Failed: ${err.message}`, 'terminal-err');
+        if (appState.serialReader) appState.serialReader.releaseLock();
       }
     }
 
     async function disconnectSerial() {
       try {
-        appendTerminal('Disconnecting from Arduino...', 'terminal-warn');
         if (appState.serialReader) {
           await appState.serialReader.cancel();
           await appState.readableStreamClosed.catch(() => {});
@@ -1887,254 +2453,112 @@
           await appState.serialPort.close();
           appState.serialPort = null;
         }
-      } catch (err) {
-        console.error('Error closing port:', err);
-      } finally {
-        appState.connected = false;
-        updateConnectionStatusUI('disconnected');
-        appendTerminal('DISCONNECTED from Arduino.', 'terminal-warn');
-      }
+      } catch (e) {}
+      appState.connected = false;
+      updateConnectionUI(false);
+      showToast('Arduino Disconnected');
     }
 
-    function updateConnectionStatusUI(state) {
-      const dot = document.getElementById('connectionDot');
-      const text = document.getElementById('connectionText');
-      const btn = document.getElementById('btnConnectSerial');
-      const btnText = document.getElementById('btnConnectText');
+    function updateConnectionUI(connected) {
+      const pill = document.getElementById('arduinoPill');
+      const dot = document.getElementById('arduinoDot');
+      const text = document.getElementById('arduinoPillText');
+      const btnHeader = document.getElementById('btnConnectHeaderText');
+      const btnDevice = document.getElementById('btnConnectDeviceText');
+      const devConn = document.getElementById('devConnStatus');
+      const source = document.getElementById('valDataSource');
 
-      if (state === 'connected') {
-        dot.className = 'status-dot connected';
-        text.innerText = 'Arduino Connected (COM)';
-        btn.className = 'btn btn-outline';
-        btnText.innerText = 'Disconnect';
-      } else if (state === 'demo') {
-        dot.className = 'status-dot demo';
-        text.innerText = 'Demo Mode (Simulated)';
-        btn.className = 'btn btn-primary';
-        btnText.innerText = 'Connect Arduino';
+      if (connected) {
+        pill.className = 'pill pill-green';
+        dot.className = 'pill-green-dot';
+        text.innerText = 'Arduino Uno Connected';
+        btnHeader.innerText = 'Disconnect';
+        btnDevice.innerText = 'Disconnect';
+        devConn.innerHTML = '● Connected';
+        devConn.style.color = 'var(--green)';
+        source.innerText = 'Real Arduino (USB)';
+        document.getElementById('sourceDot').style.background = 'var(--green)';
       } else {
-        dot.className = 'status-dot';
+        pill.className = 'pill pill-red';
+        dot.className = 'pill-red-dot';
         text.innerText = 'Arduino Disconnected';
-        btn.className = 'btn btn-primary';
-        btnText.innerText = 'Connect Arduino';
+        btnHeader.innerText = 'Connect Arduino';
+        btnDevice.innerText = 'Connect Arduino';
+        devConn.innerHTML = '● Disconnected';
+        devConn.style.color = 'var(--red)';
+        source.innerText = 'Disconnected';
+        document.getElementById('sourceDot').style.background = 'var(--text-dim)';
       }
     }
 
-    // ==========================================
-    // CAPSTONE DEMO SIMULATION ENGINE
-    // ==========================================
-    function toggleDemoMode() {
-      if (appState.isDemo) {
-        stopDemoMode();
-      } else {
-        startDemoMode();
+    function setSystemMode(m) {
+      appState.mode = m;
+      document.getElementById('btnModeAuto').className = m === 'AUTO' ? 'mode-btn active' : 'mode-btn';
+      document.getElementById('btnModeManual').className = m === 'MANUAL' ? 'mode-btn active' : 'mode-btn';
+      showToast(`Mode: ${m}`);
+    }
+
+    function openSettingsModal() {
+      document.getElementById('settingsModal').classList.add('active');
+    }
+
+    function closeSettingsModal() {
+      document.getElementById('settingsModal').classList.remove('active');
+    }
+
+    function saveThresholdSetting() {
+      const th = parseFloat(document.getElementById('inputThreshold').value);
+      if (!isNaN(th)) {
+        appState.threshold = th;
+        document.getElementById('valThresholdDisplay').innerText = `${th.toFixed(1)}°C`;
+        document.getElementById('boxAutoTh').innerText = `${th.toFixed(1)}°C`;
+        document.getElementById('modalCutOffText').innerText = `${(th - appState.hysteresis).toFixed(1)}°C`;
+        showToast(`Threshold updated to ${th.toFixed(1)}°C`);
       }
+      closeSettingsModal();
     }
 
-    function startDemoMode() {
-      if (appState.connected) {
-        disconnectSerial();
-      }
-
-      appState.isDemo = true;
-      document.getElementById('demoBanner').classList.add('active');
-      document.getElementById('btnDemoToggle').className = 'btn btn-outline btn-demo';
-      document.getElementById('btnDemoText').innerText = 'Stop Demo';
-      document.getElementById('sandboxStateBadge').innerText = 'DEMO ACTIVE';
-      document.getElementById('sandboxStateBadge').className = 'badge badge-normal';
-      updateConnectionStatusUI('demo');
-
-      appendTerminal('DEMO MODE STARTED: Generating realistic telemetry simulation.', 'terminal-warn');
-
-      // Initialize simulation loop
-      appState.simulatedTemp = 28.5;
-      appState.simulatedFan = false;
-      document.getElementById('simTempSlider').value = 28.5;
-      document.getElementById('simTempDisplay').innerText = '28.5 °C';
-
-      if (appState.demoInterval) clearInterval(appState.demoInterval);
-      appState.demoInterval = setInterval(runDemoTick, 1000);
+    function setTempUnit(u) {
+      appState.unit = u;
+      document.getElementById('btnUnitC').className = u === 'C' ? 'mode-btn active' : 'mode-btn';
+      document.getElementById('btnUnitF').className = u === 'F' ? 'mode-btn active' : 'mode-btn';
+      updateGauge(appState.temperature);
     }
 
-    function stopDemoMode() {
-      appState.isDemo = false;
-      if (appState.demoInterval) {
-        clearInterval(appState.demoInterval);
-        appState.demoInterval = null;
-      }
-      document.getElementById('demoBanner').classList.remove('active');
-      document.getElementById('btnDemoToggle').className = 'btn btn-demo';
-      document.getElementById('btnDemoText').innerText = 'Start Demo';
-      document.getElementById('sandboxStateBadge').innerText = 'STANDBY';
-      document.getElementById('sandboxStateBadge').className = 'badge badge-off';
-      updateConnectionStatusUI('disconnected');
-
-      appendTerminal('DEMO MODE STOPPED.', 'terminal-warn');
+    function setChartFilter(f, btn) {
+      document.querySelectorAll('.chart-btn').forEach(b => b.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+      showToast(`Filter: ${f.toUpperCase()}`);
     }
 
-    function runDemoTick() {
-      if (!appState.isDemo) return;
-
-      if (appState.demoAutoSine) {
-        appState.simSineStep += 0.15;
-        // Oscillate between 26°C and 35°C
-        appState.simulatedTemp = 30.5 + Math.sin(appState.simSineStep) * 4.5;
-        document.getElementById('simTempSlider').value = appState.simulatedTemp.toFixed(1);
-        document.getElementById('simTempDisplay').innerText = `${appState.simulatedTemp.toFixed(1)} °C`;
-      } else {
-        // Subtle ambient natural sensor noise (±0.15°C)
-        const jitter = (Math.random() - 0.5) * 0.25;
-        appState.simulatedTemp = Math.max(18, Math.min(48, appState.simulatedTemp + jitter));
-      }
-
-      // Check simulated error injection
-      if (appState.simErrorInjected) {
-        const errorPacket = `TEMP:ERR,FAN:0,TH:${appState.threshold.toFixed(1)},MODE:${appState.mode},STAT:ERROR`;
-        handleIncomingSerialLine(errorPacket);
-        return;
-      }
-
-      // Simulated Arduino firmware hysteresis logic
-      if (appState.mode === 'AUTO') {
-        if (!appState.simulatedFan) {
-          if (appState.simulatedTemp >= appState.threshold) {
-            appState.simulatedFan = true;
-          }
-        } else {
-          // Drops strictly below (threshold - 1.0)
-          if (appState.simulatedTemp < (appState.threshold - 1.0)) {
-            appState.simulatedFan = false;
-          }
-        }
-      } else {
-        // Manual mode obeys explicit user state
-        appState.simulatedFan = appState.manualFanRequested;
-      }
-
-      const packet = `TEMP:${appState.simulatedTemp.toFixed(1)},FAN:${appState.simulatedFan ? 1 : 0},TH:${appState.threshold.toFixed(1)},MODE:${appState.mode},STAT:${appState.simulatedFan ? 'COOLING' : 'NORMAL'}`;
-      handleIncomingSerialLine(packet);
+    function showToast(msg) {
+      const c = document.getElementById('toast-container');
+      if (!c) return;
+      const t = document.createElement('div');
+      t.className = 'toast-msg';
+      t.innerText = msg;
+      c.appendChild(t);
+      setTimeout(() => {
+        t.style.opacity = '0';
+        t.style.transform = 'translateY(10px)';
+        t.style.transition = 'all 0.3s';
+        setTimeout(() => t.remove(), 300);
+      }, 2400);
     }
 
-    function onSimSliderInput(val) {
-      appState.demoAutoSine = false;
-      appState.simErrorInjected = false;
-      appState.simulatedTemp = parseFloat(val);
-      document.getElementById('simTempDisplay').innerText = `${appState.simulatedTemp.toFixed(1)} °C`;
-      
-      if (!appState.isDemo) {
-        startDemoMode();
-      }
-      runDemoTick();
+    function toggleMobileSidebar() {
+      document.getElementById('sidebar').classList.toggle('mobile-open');
     }
 
-    function triggerSimScenario(scenario) {
-      if (!appState.isDemo) {
-        startDemoMode();
-      }
-
-      if (scenario === 'HEAT_WAVE') {
-        appState.demoAutoSine = false;
-        appState.simErrorInjected = false;
-        appState.simulatedTemp = 36.4;
-        document.getElementById('simTempSlider').value = 36.4;
-        document.getElementById('simTempDisplay').innerText = '36.4 °C';
-        appendTerminal('SIMULATION: Triggered Heat Wave (36.4°C). Expect fan cut-in!', 'terminal-warn');
-        runDemoTick();
-      } else if (scenario === 'COOL_DOWN') {
-        appState.demoAutoSine = false;
-        appState.simErrorInjected = false;
-        appState.simulatedTemp = 26.2;
-        document.getElementById('simTempSlider').value = 26.2;
-        document.getElementById('simTempDisplay').innerText = '26.2 °C';
-        appendTerminal('SIMULATION: Cooled down to 26.2°C. Fan should shut off below 29.0°C.', 'terminal-warn');
-        runDemoTick();
-      } else if (scenario === 'SENSOR_FAULT') {
-        appState.simErrorInjected = !appState.simErrorInjected;
-        appendTerminal(`SIMULATION: Sensor Fault toggled ${appState.simErrorInjected ? 'ON' : 'OFF'}.`, 'terminal-err');
-        runDemoTick();
-      } else if (scenario === 'CYCLE_TEST') {
-        appState.demoAutoSine = !appState.demoAutoSine;
-        appendTerminal(`SIMULATION: Automatic Sine Wave thermal cycle ${appState.demoAutoSine ? 'STARTED' : 'STOPPED'}.`, 'terminal-warn');
-      }
+    function setActiveNav(el) {
+      document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+      el.classList.add('active');
+      document.getElementById('sidebar').classList.remove('mobile-open');
     }
 
-    function simulateArduinoCommand(cmd) {
-      appendTerminal(`[DEMO SIMULATOR RECV]: ${cmd}`, 'terminal-out');
-      
-      if (cmd.startsWith('SET_TH:')) {
-        const val = parseFloat(cmd.substring(7));
-        if (!isNaN(val)) {
-          appState.threshold = val;
-          appendTerminal(`ACK:TH:${val.toFixed(1)}`, 'terminal-in');
-          handleAckMessage(`ACK:TH:${val.toFixed(1)}`);
-        }
-      } else if (cmd.startsWith('SET_MODE:')) {
-        const m = cmd.substring(9).toUpperCase();
-        appState.mode = m;
-        appendTerminal(`ACK:MODE:${m}`, 'terminal-in');
-      } else if (cmd.startsWith('SET_FAN:')) {
-        const f = cmd.substring(8);
-        appState.manualFanRequested = (f === '1');
-        appendTerminal(`ACK:FAN:${f}`, 'terminal-in');
-      }
-    }
-
-    // ==========================================
-    // TERMINAL CONSOLE HELPERS
-    // ==========================================
-    function appendTerminal(text, cssClass = '') {
-      const container = document.getElementById('terminalLog');
-      if (!container) return;
-
-      const timeStr = new Date().toTimeString().split(' ')[0];
-      const line = document.createElement('div');
-      line.className = `terminal-line ${cssClass}`;
-      line.innerHTML = `<span class="terminal-time">[${timeStr}]</span>${escapeHtml(text)}`;
-
-      container.appendChild(line);
-      container.scrollTop = container.scrollHeight;
-
-      // Keep terminal buffer reasonably sized
-      while (container.childNodes.length > 100) {
-        container.removeChild(container.firstChild);
-      }
-    }
-
-    function clearTerminal() {
-      document.getElementById('terminalLog').innerHTML = '';
-      appendTerminal('Terminal cleared.', 'terminal-warn');
-    }
-
-    function handleCmdKeyDown(e) {
-      if (e.key === 'Enter') {
-        sendCustomCommand();
-      }
-    }
-
-    function sendCustomCommand() {
-      const input = document.getElementById('cmdInput');
-      const val = input.value.trim();
-      if (!val) return;
-      sendSerialCommand(val);
-      appendTerminal(`User Tx: ${val}`, 'terminal-out');
-      input.value = '';
-    }
-
-    function escapeHtml(str) {
-      return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-    }
-
-    // ==========================================
-    // MODAL DIALOG
-    // ==========================================
-    function showModal(title, bodyHtml) {
-      document.getElementById('modalHeader').innerText = title;
-      document.getElementById('modalBody').innerHTML = bodyHtml;
-      document.getElementById('helpModal').classList.add('active');
-    }
-
-    function closeModal() {
-      document.getElementById('helpModal').classList.remove('active');
+    function scrollToSection(id) {
+      const el = document.getElementById(id);
+      if (el) el.scrollIntoView({ behavior: 'smooth' });
     }
   </script>
 </body>
